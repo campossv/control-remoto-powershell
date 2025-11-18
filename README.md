@@ -307,8 +307,9 @@ El cliente incluye una interfaz gráfica completa:
 
 1. **Conectar al servidor**:
    - Ingresar IP/hostname del servidor
+   - Agrega la contraseña del certificado.
    - Clic en "Conectar"
-
+![alt text](image.png)
 2. **Ejecutar comandos**:
    - Usar los botones de la interfaz
    - O escribir comandos personalizados
