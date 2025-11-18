@@ -28,7 +28,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 
-Add-Type @\"
+Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 
@@ -1603,7 +1603,7 @@ $dataGridSoftware.Add_SelectionChanged({
             $swVendor = $selectedSoftware.Cells["Vendor"].Value
             $swInstallDate = $selectedSoftware.Cells["InstallDate"].Value
             
-            $info = @\"
+            $info = @"
 Nombre: $swName
 
 Versión: $swVersion
@@ -1919,7 +1919,7 @@ function Update-MassInstallPreview {
         $installerName = [System.IO.Path]::GetFileName($txtInstallerPath.Text)
         $params = $txtInstallParams.Text
         
-        $preview = @\"
+        $preview = @"
 📦 Instalador: $installerName
 ⚙️ Parámetros: $params
 🖥️ Servidores: $selectedCount

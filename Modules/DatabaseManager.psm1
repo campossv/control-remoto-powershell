@@ -21,7 +21,7 @@ function Initialize-Database {
         $command = $connection.CreateCommand()
         
         
-        $command.CommandText = @\"
+        $command.CommandText = @"
 CREATE TABLE IF NOT EXISTS Servers (
     ServerID INTEGER PRIMARY KEY AUTOINCREMENT,
     IPAddress TEXT NOT NULL UNIQUE,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS Servers (
         $command.ExecuteNonQuery() | Out-Null
         
         
-        $command.CommandText = @\"
+        $command.CommandText = @"
 CREATE TABLE IF NOT EXISTS SessionLogs (
     LogID INTEGER PRIMARY KEY AUTOINCREMENT,
     SessionID TEXT NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS SessionLogs (
         $command.ExecuteNonQuery() | Out-Null
         
         
-        $command.CommandText = @\"
+        $command.CommandText = @"
 CREATE TABLE IF NOT EXISTS CommandHistory (
     CommandID INTEGER PRIMARY KEY AUTOINCREMENT,
     SessionID TEXT NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS CommandHistory (
         $command.ExecuteNonQuery() | Out-Null
         
         
-        $command.CommandText = @\"
+        $command.CommandText = @"
 CREATE TABLE IF NOT EXISTS SystemMetrics (
     MetricID INTEGER PRIMARY KEY AUTOINCREMENT,
     ServerID INTEGER,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS SystemMetrics (
         $command.ExecuteNonQuery() | Out-Null
         
         
-        $command.CommandText = @\"
+        $command.CommandText = @"
 CREATE TABLE IF NOT EXISTS HardwareInventory (
     HardwareID INTEGER PRIMARY KEY AUTOINCREMENT,
     ServerID INTEGER,
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS HardwareInventory (
         $command.ExecuteNonQuery() | Out-Null
         
         
-        $command.CommandText = @\"
+        $command.CommandText = @"
 CREATE TABLE IF NOT EXISTS SoftwareInventory (
     SoftwareID INTEGER PRIMARY KEY AUTOINCREMENT,
     ServerID INTEGER,
@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS SoftwareInventory (
         $command.ExecuteNonQuery() | Out-Null
         
         
-        $command.CommandText = @\"
+        $command.CommandText = @"
 CREATE TABLE IF NOT EXISTS SoftwareChanges (
     ChangeID INTEGER PRIMARY KEY AUTOINCREMENT,
     ServerID INTEGER,
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS SoftwareChanges (
         $command.ExecuteNonQuery() | Out-Null
         
         
-        $command.CommandText = @\"
+        $command.CommandText = @"
 CREATE TABLE IF NOT EXISTS DiskInventory (
     DiskID INTEGER PRIMARY KEY AUTOINCREMENT,
     ServerID INTEGER,
@@ -180,7 +180,7 @@ function Add-Server {
         $connection.Open()
         
         $command = $connection.CreateCommand()
-        $command.CommandText = @\"
+        $command.CommandText = @"
 INSERT OR REPLACE INTO Servers 
 (IPAddress, Hostname, Description, OS, CertificateThumbprint, LastConnection, Status) 
 VALUES (@IP, @Host, @Desc, @OS, @Cert, @Time, 'Active')

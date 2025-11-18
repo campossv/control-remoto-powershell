@@ -43,7 +43,7 @@ function Start-RemoteSession {
     $script:CurrentSessionLog = Join-Path $script:LogDirectory $logFileName
     
     
-    $header = @\"
+    $header = @"
 ================================================================================
 NUEVA SESIÓN REMOTA
 ================================================================================
@@ -130,7 +130,7 @@ function Stop-RemoteSession {
         $durationText = $duration.ToString()
     }
     
-    $footer = @\"
+    $footer = @"
 
 ================================================================================
 FIN DE SESIÓN
@@ -234,7 +234,7 @@ function Export-SessionReport {
     $sessions = Get-SessionHistory -Last 1000 |
     Where-Object { $_.DateTime -gt (Get-Date).AddDays(-$Days) }
     
-    $html = @\"
+    $html = @"
 <!DOCTYPE html>
 <html>
 <head>
@@ -277,7 +277,7 @@ function Export-SessionReport {
 "@
     
     foreach ($session in $sessions) {
-        $html += @\"
+        $html += @"
         <tr>
             <td>$($session.DateTime.ToString("yyyy-MM-dd HH:mm:ss"))</td>
             <td>$($session.ServerIP)</td>
@@ -288,7 +288,7 @@ function Export-SessionReport {
 "@
     }
     
-    $html += @\"
+    $html += @"
     </table>
     <p style="margin-top: 20px; color: 
 </body>

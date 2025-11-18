@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Script de diagnóstico para verificar la configuración del servidor de Control Remoto.
 
