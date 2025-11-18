@@ -1,0 +1,8 @@
+# Archivo de ejemplo para servers.txt
+# Formato: FECHA HORA - IP - DESCRIPCIÓN
+# Este archivo se genera automáticamente al conectar a servidores
+
+# Ejemplos:
+# 24/05/2023 14:30:45 - 192.168.1.100 - Servidor de Archivos Principal
+# 25/05/2023 09:15:22 - 10.0.0.5 - Servidor SQL Producción
+# 26/05/2023 11:20:33 - 192.168.1.50 - Controlador de Dominio
