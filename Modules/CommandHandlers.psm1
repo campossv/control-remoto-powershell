@@ -678,6 +678,9 @@ function Process-Command {
     
     try {
         $json = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($encodedCommand))
+        Write-Host "JSON recibido: $json"
+        
+
         $commandObj = $json | ConvertFrom-Json
     }
     catch {
@@ -688,6 +691,7 @@ function Process-Command {
     }
     
     $action = $commandObj.action
+    Write-Host "Acción recibida: '$action'"
 
     switch ($action) {
         "EXECUTE_COMMAND" { Handle-ExecuteCommand -commandObj $commandObj -writer $writer }

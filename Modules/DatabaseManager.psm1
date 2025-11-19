@@ -154,6 +154,28 @@ CREATE TABLE IF NOT EXISTS DiskInventory (
 "@
         $command.ExecuteNonQuery() | Out-Null
         
+        $command.CommandText = @"
+CREATE TABLE IF NOT EXISTS Tags (
+    TagID INTEGER PRIMARY KEY AUTOINCREMENT,
+    TagName TEXT NOT NULL,
+    TagCategory TEXT,
+    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+"@
+        $command.ExecuteNonQuery() | Out-Null
+
+        $command.CommandText = @"
+CREATE TABLE IF NOT EXISTS ServerTags (
+    ServerTagID INTEGER PRIMARY KEY AUTOINCREMENT,
+    ServerID INTEGER NOT NULL,
+    TagID INTEGER NOT NULL,
+    FOREIGN KEY (ServerID) REFERENCES Servers(ServerID),
+    FOREIGN KEY (TagID) REFERENCES Tags(TagID),
+    UNIQUE (ServerID, TagID)
+);
+"@
+        $command.ExecuteNonQuery() | Out-Null
+        
         $connection.Close()
         
         Write-Host "Base de datos inicializada: $script:DatabasePath" -ForegroundColor Green
@@ -214,7 +236,7 @@ function Get-Servers {
         $connection.Open()
         
         $command = $connection.CreateCommand()
-        $command.CommandText = "SELECT * FROM Servers WHERE Status = 'Active' ORDER BY LastConnection DESC"
+        $command.CommandText = "SELECT * FROM Servers ORDER BY LastConnection DESC"
         
         $adapter = New-Object System.Data.SQLite.SQLiteDataAdapter($command)
         $dataSet = New-Object System.Data.DataSet
@@ -378,5 +400,248 @@ function Add-SoftwareInventory {
     }
 }
 
-Export-ModuleMember -Function Initialize-Database, Add-Server, Get-Servers, Add-SessionLog, Add-HardwareInventory, Add-SoftwareInventory
+function Get-ServerTags {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ServerIP
+    )
+    
+    try {
+        if (-not (Test-Path $script:DatabasePath)) {
+            Write-Warning "Base de datos no encontrada: $script:DatabasePath"
+            return $null
+        }
 
+        $connection = New-Object System.Data.SQLite.SQLiteConnection($script:ConnectionString)
+        $connection.Open()
+
+        $command = $connection.CreateCommand()
+        $command.CommandText = @"
+SELECT st.TagName, st.TagCategory
+FROM ServerTags st
+JOIN Servers s ON st.ServerID = s.ServerID
+WHERE s.IPAddress = @IP
+ORDER BY st.TagName
+"@
+        $command.Parameters.AddWithValue("@IP", $ServerIP) | Out-Null
+
+        $adapter = New-Object System.Data.SQLite.SQLiteDataAdapter($command)
+        $dataSet = New-Object System.Data.DataSet
+        $rowCount = $adapter.Fill($dataSet)
+
+        $connection.Close()
+
+        if ($rowCount -gt 0) {
+            return , $dataSet.Tables[0]
+        }
+        else {
+            return $null
+        }
+    }
+    catch {
+        Write-Warning ("Error al obtener etiquetas del servidor {0}: {1}" -f $ServerIP, $_)
+        return $null
+    }
+}
+
+function Add-ServerTag {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ServerIP,
+        [Parameter(Mandatory = $true)]
+        [string]$TagName,
+        [string]$TagCategory = ""
+    )
+
+    try {
+        if (-not (Test-Path $script:DatabasePath)) {
+            Write-Warning "Base de datos no encontrada: $script:DatabasePath"
+            return $false
+        }
+
+        $connection = New-Object System.Data.SQLite.SQLiteConnection($script:ConnectionString)
+        $connection.Open()
+
+        $command = $connection.CreateCommand()
+
+        $command.CommandText = "SELECT ServerID FROM Servers WHERE IPAddress = @IP"
+        $command.Parameters.AddWithValue("@IP", $ServerIP) | Out-Null
+        $serverID = $command.ExecuteScalar()
+
+        if (-not $serverID) {
+            Write-Warning "Add-ServerTag: Servidor no encontrado en BD: $ServerIP"
+            $connection.Close()
+            return $false
+        }
+
+        $catParam = if ([string]::IsNullOrWhiteSpace($TagCategory)) { $null } else { $TagCategory }
+
+        $command.CommandText = "INSERT INTO ServerTags (ServerID, TagName, TagCategory, CreatedDate) VALUES (@SID, @Name, @Cat, datetime('now'))"
+        $command.Parameters.Clear()
+        $command.Parameters.AddWithValue("@SID", $serverID) | Out-Null
+        $command.Parameters.AddWithValue("@Name", $TagName) | Out-Null
+        $command.Parameters.AddWithValue("@Cat", $catParam) | Out-Null
+        $command.ExecuteNonQuery() | Out-Null
+
+        $connection.Close()
+        return $true
+    }
+    catch {
+        Write-Warning ("Error al agregar etiqueta '{0}' a {1}: {2}" -f $TagName, $ServerIP, $_)
+        return $false
+    }
+}
+
+function Remove-ServerTag {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ServerIP,
+        [Parameter(Mandatory = $true)]
+        [string]$TagName
+    )
+
+    try {
+        if (-not (Test-Path $script:DatabasePath)) {
+            Write-Warning "Base de datos no encontrada: $script:DatabasePath"
+            return $false
+        }
+
+        $connection = New-Object System.Data.SQLite.SQLiteConnection($script:ConnectionString)
+        $connection.Open()
+
+        $command = $connection.CreateCommand()
+
+        $command.CommandText = "SELECT ServerID FROM Servers WHERE IPAddress = @IP"
+        $command.Parameters.AddWithValue("@IP", $ServerIP) | Out-Null
+        $serverID = $command.ExecuteScalar()
+
+        if (-not $serverID) {
+            Write-Warning "Remove-ServerTag: Servidor no encontrado en BD: $ServerIP"
+            $connection.Close()
+            return $false
+        }
+
+        $command.CommandText = "SELECT TagID FROM Tags WHERE TagName = @Name"
+        $command.Parameters.Clear()
+        $command.Parameters.AddWithValue("@Name", $TagName) | Out-Null
+        $tagID = $command.ExecuteScalar()
+
+        if (-not $tagID) {
+            Write-Warning "Remove-ServerTag: Etiqueta no encontrada: $TagName"
+            $connection.Close()
+            return $false
+        }
+
+        $command.CommandText = "DELETE FROM ServerTags WHERE ServerID = @SID AND TagID = @TID"
+        $command.Parameters.Clear()
+        $command.Parameters.AddWithValue("@SID", $serverID) | Out-Null
+        $command.Parameters.AddWithValue("@TID", $tagID) | Out-Null
+        $command.ExecuteNonQuery() | Out-Null
+
+        $connection.Close()
+        return $true
+    }
+    catch {
+        Write-Warning ("Error al eliminar etiqueta '{0}' de {1}: {2}" -f $TagName, $ServerIP, $_)
+        return $false
+    }
+}
+
+function Get-AllTags {
+    try {
+        if (-not (Test-Path $script:DatabasePath)) {
+            Write-Warning "Base de datos no encontrada: $script:DatabasePath"
+            return $null
+        }
+
+        $connection = New-Object System.Data.SQLite.SQLiteConnection($script:ConnectionString)
+        $connection.Open()
+
+        $command = $connection.CreateCommand()
+        $command.CommandText = @"
+SELECT 
+    st.TagName,
+    st.TagCategory,
+    COUNT(DISTINCT st.ServerID) AS ServerCount
+FROM ServerTags st
+GROUP BY st.TagName, st.TagCategory
+ORDER BY st.TagName
+"@
+
+        $adapter = New-Object System.Data.SQLite.SQLiteDataAdapter($command)
+        $dataSet = New-Object System.Data.DataSet
+        $rowCount = $adapter.Fill($dataSet)
+
+        $connection.Close()
+
+        if ($rowCount -gt 0) {
+            return , $dataSet.Tables[0]
+        }
+        else {
+            return $null
+        }
+    }
+    catch {
+        Write-Warning "Error al obtener todas las etiquetas: $_"
+        return $null
+    }
+}
+
+function Get-ServersByTag {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$TagNames
+    )
+
+    try {
+        if (-not (Test-Path $script:DatabasePath)) {
+            Write-Warning "Base de datos no encontrada: $script:DatabasePath"
+            return $null
+        }
+
+        if (-not $TagNames -or $TagNames.Count -eq 0) {
+            return Get-Servers
+        }
+
+        $connection = New-Object System.Data.SQLite.SQLiteConnection($script:ConnectionString)
+        $connection.Open()
+
+        $command = $connection.CreateCommand()
+
+        $placeholders = @()
+        for ($i = 0; $i -lt $TagNames.Count; $i++) {
+            $pName = "@Tag$i"
+            $placeholders += $pName
+            $null = $command.Parameters.AddWithValue($pName, $TagNames[$i])
+        }
+
+        $inClause = $placeholders -join ","
+
+        $command.CommandText = @"
+SELECT DISTINCT s.*
+FROM Servers s
+JOIN ServerTags st ON s.ServerID = st.ServerID
+WHERE st.TagName IN ($inClause)
+ORDER BY s.LastConnection DESC
+"@
+
+        $adapter = New-Object System.Data.SQLite.SQLiteDataAdapter($command)
+        $dataSet = New-Object System.Data.DataSet
+        $rowCount = $adapter.Fill($dataSet)
+
+        $connection.Close()
+
+        if ($rowCount -gt 0) {
+            return , $dataSet.Tables[0]
+        }
+        else {
+            return $null
+        }
+    }
+    catch {
+        Write-Warning "Error al obtener servidores por tag: $_"
+        return $null
+    }
+}
+
+Export-ModuleMember -Function Initialize-Database, Add-Server, Get-Servers, Add-SessionLog, Add-HardwareInventory, Add-SoftwareInventory, Get-ServerTags, Add-ServerTag, Remove-ServerTag, Get-AllTags, Get-ServersByTag

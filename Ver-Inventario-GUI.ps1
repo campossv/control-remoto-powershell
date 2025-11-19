@@ -228,7 +228,7 @@ function Update-ServerStatus {
         $connection.Open()
         
         $command = $connection.CreateCommand()
-        $command.CommandText = @\"
+        $command.CommandText = @"
 UPDATE Servers 
 SET Status = 'Inactive'
 WHERE Status = 'Active' 
@@ -249,7 +249,7 @@ AND datetime(LastConnection) < datetime('now', '-1 day')
 function Load-Servers {
     try {
         
-        Update-ServerStatus
+        #Update-ServerStatus
         
         $servers = Get-Servers
         
@@ -330,7 +330,7 @@ function Load-Hardware {
         $connection.Open()
         
         $command = $connection.CreateCommand()
-        $command.CommandText = @\"
+        $command.CommandText = @"
 SELECT h.ComponentType as 'Tipo', h.Manufacturer as 'Fabricante', 
        h.Model as 'Modelo', h.SerialNumber as 'Serie', 
        h.Capacity as 'Capacidad', h.Speed as 'Velocidad', 
@@ -375,7 +375,7 @@ function Load-Software {
         $connection.Open()
         
         $command = $connection.CreateCommand()
-        $command.CommandText = @\"
+        $command.CommandText = @"
 SELECT s.SoftwareName as 'Nombre', s.Version as 'Versión', 
        s.Publisher as 'Fabricante', s.InstallDate as 'Fecha Instalación',
        s.Size as 'Tamaño (KB)', s.LastScan as 'Último Escaneo'
@@ -564,7 +564,7 @@ function Edit-Server {
             $editForm.CancelButton = $btnCancel
             
             if ($editForm.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-                $command.CommandText = @\"
+                $command.CommandText = @"
 UPDATE Servers 
 SET Hostname = @Host, 
     Description = @Desc, 
@@ -698,7 +698,7 @@ function Uninstall-RemoteSoftware {
             $lblStatus.ForeColor = [System.Drawing.Color]::Blue
             
             
-            $uninstallScript = @\"
+            $uninstallScript = @"
 `$software = Get-WmiObject -Class Win32_Product | Where-Object { `$_.Name -eq '$SoftwareName' }
 if (`$software) {
     `$result = `$software.Uninstall()
@@ -780,7 +780,7 @@ function Install-RemoteSoftware {
                 Copy-Item -Path $installerPath -Destination $remotePath -Force
                 
                 
-                $installScript = @\"
+                $installScript = @"
 `$installer = "C:\Temp\$installerName"
 if (Test-Path `$installer) {
     if (`$installer -like "*.msi") {
@@ -981,7 +981,7 @@ function Search-SoftwareInServers {
             $connection.Open()
             
             
-            $query = @\"
+            $query = @"
 SELECT 
     srv.Hostname,
     srv.IPAddress,
