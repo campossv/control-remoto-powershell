@@ -21,6 +21,10 @@ $global:sessionActive = $false
 $global:sessionId = $null
 
 
+$script:CommandHistory = New-Object System.Collections.Generic.List[string]
+$script:HistoryIndex = -1
+
+
 Initialize-SessionLogger
 
 
@@ -385,24 +389,57 @@ function Execute-RemoteCommand {
     
     
     Write-SessionLog -Level "COMMAND" -Message "Ejecutando comando remoto" -Details $command
+
+    if (-not [string]::IsNullOrWhiteSpace($command)) {
+        $script:CommandHistory.Add($command)
+        $script:HistoryIndex = $script:CommandHistory.Count
+    }
     
     try {
         $commandToSend = Format-CommandPacket -action "EXECUTE_COMMAND" -parameters @($command)
         $response = Send-RemoteCommand -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -command $commandToSend -clientCertificate $global:clientCertificate
         
+        $prompt = "PS $($global:selectedServer.IP)> "
+
         if ($response.success) {
-            $txtSalida.Clear()
-            $txtSalida.AppendText(">> $command`r`n")
-            $txtSalida.AppendText($response.output + "`r`n`r`n")
+            $txtSalida.SelectionColor = [System.Drawing.Color]::Cyan
+            $txtSalida.AppendText($prompt)
+
+            $txtSalida.SelectionColor = [System.Drawing.Color]::White
+            $txtSalida.AppendText($command + "`r`n")
+
+            if ($response.output) {
+                $txtSalida.SelectionColor = [System.Drawing.Color]::LightGray
+                $txtSalida.AppendText($response.output + "`r`n")
+            }
+
+            $txtSalida.SelectionColor = [System.Drawing.Color]::White
+            $txtSalida.AppendText("`r`n")
+
+            $txtSalida.ScrollToCaret()
+
             Write-SessionLog -Level "SUCCESS" -Message "Comando ejecutado exitosamente" -Details "Salida: $($response.output.Length) caracteres"
         }
         else {
+            $txtSalida.SelectionColor = [System.Drawing.Color]::Cyan
+            $txtSalida.AppendText($prompt)
+
+            $txtSalida.SelectionColor = [System.Drawing.Color]::White
+            $txtSalida.AppendText($command + "`r`n")
+
+            $txtSalida.SelectionColor = [System.Drawing.Color]::Red
             $txtSalida.AppendText("Error: $($response.message)`r`n`r`n")
+
+            $txtSalida.SelectionColor = [System.Drawing.Color]::White
+            $txtSalida.ScrollToCaret()
+
             Write-SessionLog -Level "ERROR" -Message "Error al ejecutar comando" -Details $response.message
         }
     }
     catch {
+        $txtSalida.SelectionColor = [System.Drawing.Color]::Red
         $txtSalida.AppendText("Error de ejecución: $($_.Exception.Message)`r`n`r`n")
+        $txtSalida.SelectionColor = [System.Drawing.Color]::White
         Write-SessionLog -Level "ERROR" -Message "Excepción al ejecutar comando" -Details $_.Exception.Message
     }
 }
@@ -1241,10 +1278,37 @@ $TabFiles.Controls.Add($txtSalida)
 
 $txtComando.Add_KeyDown({
         param($eventSender, $e)
+
         if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Enter) {
             if ($txtComando.Text.Trim()) {
                 Execute-RemoteCommand -command $txtComando.Text.Trim()
                 $txtComando.Clear()
+            }
+            $e.SuppressKeyPress = $true
+        }
+        elseif ($e.KeyCode -eq [System.Windows.Forms.Keys]::Up) {
+            if ($script:CommandHistory.Count -gt 0) {
+                if ($script:HistoryIndex -gt 0) {
+                    $script:HistoryIndex--
+                }
+                if ($script:HistoryIndex -ge 0 -and $script:HistoryIndex -lt $script:CommandHistory.Count) {
+                    $txtComando.Text = $script:CommandHistory[$script:HistoryIndex]
+                    $txtComando.SelectionStart = $txtComando.Text.Length
+                }
+            }
+            $e.SuppressKeyPress = $true
+        }
+        elseif ($e.KeyCode -eq [System.Windows.Forms.Keys]::Down) {
+            if ($script:CommandHistory.Count -gt 0) {
+                if ($script:HistoryIndex -lt ($script:CommandHistory.Count - 1)) {
+                    $script:HistoryIndex++
+                    $txtComando.Text = $script:CommandHistory[$script:HistoryIndex]
+                }
+                else {
+                    $script:HistoryIndex = $script:CommandHistory.Count
+                    $txtComando.Clear()
+                }
+                $txtComando.SelectionStart = $txtComando.Text.Length
             }
             $e.SuppressKeyPress = $true
         }
