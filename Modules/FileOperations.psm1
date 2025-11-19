@@ -11,15 +11,19 @@ function Update-FileList {
     )
     $encodedCmd = Format-CommandPacket -action "LIST_FILES" -parameters @($path)
     $response = Send-RemoteCommand -remoteServer $remoteServer -remotePort $remotePort -command $encodedCmd -clientCertificate $clientCertificate
-    
-    if ($response -and $response.success -and $response.files) {
+
+    if ($response -and $response.success) {
         $listBox.Items.Clear()
         if ($path -ne [System.IO.Path]::GetPathRoot($path)) {
             $listBox.Items.Add('..')
         }
-        foreach ($file in $response.files) {
-            $listBox.Items.Add($file)
+
+        if ($response.files) {
+            foreach ($file in $response.files) {
+                $listBox.Items.Add($file)
+            }
         }
+
         $listBox.Tag = $path
     }
     else {

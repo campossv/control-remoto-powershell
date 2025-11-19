@@ -526,9 +526,24 @@ $connectButton.Add_Click({
         $serverSelectionForm.Hide()
         [User32]::DestroyIcon($iconHandle)
         
-        Write-SessionLog -Level "INFO" -Message "Cargando lista de archivos inicial" -Details "Ruta: C:\"
-        Update-FileList -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path "C:\" -listBox $listBox -clientCertificate $global:clientCertificate
-        $listBox.Tag = "C:\"
+        Write-SessionLog -Level "INFO" -Message "Cargando estructura de archivos inicial" -Details "Ruta: C:\\"
+
+        $rootPath = "C:\\"
+        $rootNode = $treeDirectories.Nodes.Add($rootPath, $rootPath)
+        
+        $entries = Get-RemoteDirectoryEntries -Path $rootPath
+        foreach ($entry in $entries) {
+            $isDir = Is-RemoteDirectory -itemPath $entry -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -clientCertificate $global:clientCertificate
+            if ($isDir) {
+                $childPath = $entry
+                $childNode = $rootNode.Nodes.Add($childPath, [System.IO.Path]::GetFileName($childPath))
+            }
+        }
+
+        $treeDirectories.ExpandAll()
+
+        Update-FileList -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $rootPath -listBox $listBox -clientCertificate $global:clientCertificate
+        $listBox.Tag = $rootPath
         
         Write-SessionLog -Level "INFO" -Message "Actualizando lista de procesos"
         Refresh-Processes -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -dataGrid $dataGridProcesos -clientCertificate $global:clientCertificate
@@ -658,6 +673,29 @@ $tabControl.TabPages.Add($tabPageMassInstall)
 $form.Controls.Add($tabControl)
 
 
+
+
+function Get-RemoteDirectoryEntries {
+    param (
+        [string]$Path
+    )
+
+    try {
+        $encodedCmd = Format-CommandPacket -action "LIST_FILES" -parameters @($Path)
+        $response = Send-RemoteCommand -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -command $encodedCmd -clientCertificate $global:clientCertificate
+
+        if ($response -and $response.success -and $response.files) {
+            return $response.files
+        }
+        else {
+            return @()
+        }
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show("Error al obtener contenido del directorio remoto: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        return @()
+    }
+}
 
 
 $panelSysInfo = New-Object System.Windows.Forms.Panel
@@ -1172,9 +1210,15 @@ $buttonSalirServicios.Add_Click({ Return-ToServerSelection })
 $tabPageServicios.Controls.Add($buttonSalirServicios)
 
 
+$treeDirectories = New-Object System.Windows.Forms.TreeView
+$treeDirectories.Size = New-Object System.Drawing.Size(260, 240)
+$treeDirectories.Location = New-Object System.Drawing.Point(20, 20)
+$treeDirectories.HideSelection = $false
+$TabFiles.Controls.Add($treeDirectories)
+
 $listBox = New-Object System.Windows.Forms.ListBox
-$listBox.Size = New-Object System.Drawing.Size(750, 240)
-$listBox.Location = New-Object System.Drawing.Point(20, 20)
+$listBox.Size = New-Object System.Drawing.Size(480, 240)
+$listBox.Location = New-Object System.Drawing.Point(300, 20)
 $TabFiles.Controls.Add($listBox)
 
 $txtComando = New-Object System.Windows.Forms.TextBox
@@ -1255,8 +1299,21 @@ $buttonRDP.Location = New-Object System.Drawing.Point(670, 270)
 $TabFiles.Controls.Add($buttonRDP)
 $buttonRDP.Add_Click({ Start-Process "mstsc.exe" -ArgumentList "/v:$($global:selectedServer.IP) /f" })
 
+$treeDirectories.add_AfterSelect({
+        param($sender, $e)
+        $selectedNode = $e.Node
+        if ($null -ne $selectedNode -and $selectedNode.FullPath) {
+            $path = $selectedNode.Name
+            if (-not $path) {
+                $path = $selectedNode.Text
+            }
 
-
+            if ($path) {
+                Update-FileList -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $path -listBox $listBox -clientCertificate $global:clientCertificate
+                $listBox.Tag = $path
+            }
+        }
+    })
 
 $dataGridSoftware = New-Object System.Windows.Forms.DataGridView
 $dataGridSoftware.Location = New-Object System.Drawing.Point(10, 10)
@@ -1897,10 +1954,8 @@ function Load-MassInstallServers {
         $servers = Get-Servers
         if ($servers -and $servers.Rows.Count -gt 0) {
             foreach ($row in $servers.Rows) {
-                if ($row["Status"] -eq "Active") {
-                    $serverDisplay = "$($row['Hostname']) - $($row['IPAddress'])"
-                    $chkListServers.Items.Add($serverDisplay, $false) | Out-Null
-                }
+                $serverDisplay = "$($row['Hostname']) - $($row['IPAddress'])"
+                $chkListServers.Items.Add($serverDisplay, $false) | Out-Null
             }
         }
         
@@ -1978,10 +2033,8 @@ $btnFilterByTag.Add_Click({
                 $servers = Get-Servers
                 if ($servers -and $servers.Rows.Count -gt 0) {
                     foreach ($row in $servers.Rows) {
-                        if ($row["Status"] -eq "Active") {
-                            $serverDisplay = "$($row['Hostname']) - $($row['IPAddress'])"
-                            $chkListServers.Items.Add($serverDisplay, $false) | Out-Null
-                        }
+                        $serverDisplay = "$($row['Hostname']) - $($row['IPAddress'])"
+                        $chkListServers.Items.Add($serverDisplay, $false) | Out-Null
                     }
                 }
             }
@@ -1993,10 +2046,8 @@ $btnFilterByTag.Add_Click({
                 $servers = Get-ServersByTag -TagNames @($tagName)
                 if ($servers -and $servers.Rows.Count -gt 0) {
                     foreach ($row in $servers.Rows) {
-                        if ($row["Status"] -eq "Active") {
-                            $serverDisplay = "$($row['Hostname']) - $($row['IPAddress'])"
-                            $chkListServers.Items.Add($serverDisplay, $false) | Out-Null
-                        }
+                        $serverDisplay = "$($row['Hostname']) - $($row['IPAddress'])"
+                        $chkListServers.Items.Add($serverDisplay, $false) | Out-Null
                     }
                 }
             }
