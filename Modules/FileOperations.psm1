@@ -17,14 +17,82 @@ function Update-FileList {
         if ($path -ne [System.IO.Path]::GetPathRoot($path)) {
             $listBox.Items.Add('..')
         }
-
         if ($response.files) {
             foreach ($file in $response.files) {
-                $listBox.Items.Add($file)
+                $fullPath = if ($file.PSObject.Properties["FullName"]) { $file.FullName } else { [string]$file }
+                $listBox.Items.Add($fullPath)
             }
         }
 
         $listBox.Tag = $path
+    }
+    else {
+        [System.Windows.Forms.MessageBox]::Show("No se pudieron obtener los archivos. Ruta: $path", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+    }
+}
+
+function Update-FileListView {
+    param (
+        [string]$remoteServer,
+        [int]$remotePort,
+        [string]$path,
+        [System.Windows.Forms.ListView]$listView,
+        [System.Security.Cryptography.X509Certificates.X509Certificate2]$clientCertificate = $null
+    )
+
+    $encodedCmd = Format-CommandPacket -action "LIST_FILES" -parameters @($path)
+    $response = Send-RemoteCommand -remoteServer $remoteServer -remotePort $remotePort -command $encodedCmd -clientCertificate $clientCertificate
+
+    if ($response -and $response.success) {
+        $listView.BeginUpdate()
+        $listView.Items.Clear()
+
+        if ($path -ne [System.IO.Path]::GetPathRoot($path)) {
+            $upItem = New-Object System.Windows.Forms.ListViewItem
+            $upItem.Text = ".."
+            $upItem.Tag = [System.IO.Path]::GetDirectoryName($path)
+            $upItem.SubItems.Add("") | Out-Null
+            $upItem.SubItems.Add("") | Out-Null
+            $upItem.SubItems.Add("Carpeta") | Out-Null
+            $listView.Items.Add($upItem) | Out-Null
+        }
+
+        if ($response.files) {
+            foreach ($file in $response.files) {
+                $fullPath = if ($file.PSObject.Properties["FullName"]) { $file.FullName } else { [string]$file }
+                $name = if ($file.PSObject.Properties["Name"]) { $file.Name } else { [System.IO.Path]::GetFileName($fullPath) }
+                if (-not $name) { $name = $fullPath }
+
+                $isDir = $false
+                if ($file.PSObject.Properties["PSIsContainer"]) {
+                    $isDir = [bool]$file.PSIsContainer
+                }
+
+                $sizeText = ""
+                if (-not $isDir -and $file.PSObject.Properties["Length"] -and $null -ne $file.Length) {
+                    $sizeText = "{0:N0} KB" -f ([math]::Round([double]$file.Length / 1KB, 0))
+                }
+
+                $dateText = ""
+                if ($file.PSObject.Properties["LastWriteTime"] -and $file.LastWriteTime) {
+                    $date = [datetime]$file.LastWriteTime
+                    $dateText = $date.ToString("yyyy-MM-dd HH:mm")
+                }
+
+                $typeText = if ($isDir) { "Carpeta" } else { [System.IO.Path]::GetExtension($name) }
+
+                $item = New-Object System.Windows.Forms.ListViewItem
+                $item.Text = $name
+                $item.Tag = $fullPath
+                $item.SubItems.Add($sizeText) | Out-Null
+                $item.SubItems.Add($dateText) | Out-Null
+                $item.SubItems.Add($typeText) | Out-Null
+                $listView.Items.Add($item) | Out-Null
+            }
+        }
+
+        $listView.Tag = $path
+        $listView.EndUpdate()
     }
     else {
         [System.Windows.Forms.MessageBox]::Show("No se pudieron obtener los archivos. Ruta: $path", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
@@ -449,5 +517,5 @@ function Is-RemoteDirectory {
     return $false
 }
 
-Export-ModuleMember -Function Update-FileList, Download-RemoteFile, Upload-RemoteFile, Delete-RemoteFile, Copy-RemoteFile, Move-RemoteFile, Is-RemoteDirectory
+Export-ModuleMember -Function Update-FileList, Update-FileListView, Download-RemoteFile, Upload-RemoteFile, Delete-RemoteFile, Copy-RemoteFile, Move-RemoteFile, Is-RemoteDirectory
 

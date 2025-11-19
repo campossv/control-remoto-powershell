@@ -460,7 +460,9 @@ function Return-ToServerSelection {
     $form.Hide()
     
     
-    $listBox.Items.Clear()
+    if ($null -ne $listViewFiles) {
+        $listViewFiles.Items.Clear()
+    }
     $txtSalida.Clear()
     
     
@@ -573,14 +575,13 @@ $connectButton.Add_Click({
             $isDir = Is-RemoteDirectory -itemPath $entry -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -clientCertificate $global:clientCertificate
             if ($isDir) {
                 $childPath = $entry
-                $childNode = $rootNode.Nodes.Add($childPath, [System.IO.Path]::GetFileName($childPath))
+                [void]$rootNode.Nodes.Add($childPath, [System.IO.Path]::GetFileName($childPath))
             }
         }
 
         $treeDirectories.ExpandAll()
 
-        Update-FileList -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $rootPath -listBox $listBox -clientCertificate $global:clientCertificate
-        $listBox.Tag = $rootPath
+        Update-FileListView -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $rootPath -listView $listViewFiles -clientCertificate $global:clientCertificate
         
         Write-SessionLog -Level "INFO" -Message "Actualizando lista de procesos"
         Refresh-Processes -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -dataGrid $dataGridProcesos -clientCertificate $global:clientCertificate
@@ -722,7 +723,16 @@ function Get-RemoteDirectoryEntries {
         $response = Send-RemoteCommand -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -command $encodedCmd -clientCertificate $global:clientCertificate
 
         if ($response -and $response.success -and $response.files) {
-            return $response.files
+            $results = @()
+            foreach ($file in $response.files) {
+                if ($file.PSObject.Properties["FullName"]) {
+                    $results += $file.FullName
+                }
+                else {
+                    $results += [string]$file
+                }
+            }
+            return $results
         }
         else {
             return @()
@@ -1253,14 +1263,21 @@ $treeDirectories.Location = New-Object System.Drawing.Point(20, 20)
 $treeDirectories.HideSelection = $false
 $TabFiles.Controls.Add($treeDirectories)
 
-$listBox = New-Object System.Windows.Forms.ListBox
-$listBox.Size = New-Object System.Drawing.Size(480, 240)
-$listBox.Location = New-Object System.Drawing.Point(300, 20)
-$TabFiles.Controls.Add($listBox)
+$listViewFiles = New-Object System.Windows.Forms.ListView
+$listViewFiles.Size = New-Object System.Drawing.Size(600, 240)
+$listViewFiles.Location = New-Object System.Drawing.Point(300, 20)
+$listViewFiles.View = [System.Windows.Forms.View]::Details
+$listViewFiles.FullRowSelect = $true
+$listViewFiles.HideSelection = $false
+$listViewFiles.Columns.Add("Nombre", 260) | Out-Null
+$listViewFiles.Columns.Add("Tamaño", 80) | Out-Null
+$listViewFiles.Columns.Add("Fecha", 120) | Out-Null
+$listViewFiles.Columns.Add("Tipo", 80) | Out-Null
+$TabFiles.Controls.Add($listViewFiles)
 
 $txtComando = New-Object System.Windows.Forms.TextBox
 $txtComando.Location = New-Object System.Drawing.Point(20, 320)
-$txtComando.Size = New-Object System.Drawing.Size(750, 20)
+$txtComando.Size = New-Object System.Drawing.Size(650, 20)
 $txtComando.Font = New-Object System.Drawing.Font("Consolas", 10)
 $TabFiles.Controls.Add($txtComando)
 
@@ -1274,6 +1291,13 @@ $txtSalida.ForeColor = [System.Drawing.Color]::White
 $txtSalida.Rtf = "{\rtf1\ansi\deff0{\fonttbl{\f0 Consolas;}}{\f0\fs20\sl240\slmult1}}"
 $txtSalida.ReadOnly = $true
 $TabFiles.Controls.Add($txtSalida)
+
+$buttonClearConsole = New-Object System.Windows.Forms.Button
+$buttonClearConsole.Text = "Clear"
+$buttonClearConsole.Size = New-Object System.Drawing.Size(80, 24)
+$buttonClearConsole.Location = New-Object System.Drawing.Point(680, 318)
+$buttonClearConsole.Add_Click({ $txtSalida.Clear() })
+$TabFiles.Controls.Add($buttonClearConsole)
 
 
 $txtComando.Add_KeyDown({
@@ -1319,35 +1343,67 @@ $buttonDownload.Text = "Descargar"
 $buttonDownload.Size = New-Object System.Drawing.Size(100, 30)
 $buttonDownload.Location = New-Object System.Drawing.Point(10, 270)
 $TabFiles.Controls.Add($buttonDownload)
-$buttonDownload.Add_Click({ Download-RemoteFile -selectedFile $listBox.SelectedItem -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -clientCertificate $global:clientCertificate })
+$buttonDownload.Add_Click({
+        if ($listViewFiles.SelectedItems.Count -gt 0) {
+            $selectedPath = $listViewFiles.SelectedItems[0].Tag
+            Download-RemoteFile -selectedFile $selectedPath -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -clientCertificate $global:clientCertificate
+        }
+    })
 
 $buttonUpload = New-Object System.Windows.Forms.Button
 $buttonUpload.Text = "Subir"
 $buttonUpload.Size = New-Object System.Drawing.Size(100, 30)
 $buttonUpload.Location = New-Object System.Drawing.Point(450, 270)
 $TabFiles.Controls.Add($buttonUpload)
-$buttonUpload.Add_Click({ Upload-RemoteFile -remotePath $listBox.SelectedItem -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -listBox $listBox -clientCertificate $global:clientCertificate })
+$buttonUpload.Add_Click({
+        $currentPath = $listViewFiles.Tag
+        if (-not $currentPath) { $currentPath = "C:\" }
+        Upload-RemoteFile -remotePath $currentPath -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -listBox $null -clientCertificate $global:clientCertificate
+    })
 
 $buttonDelete = New-Object System.Windows.Forms.Button
 $buttonDelete.Text = "Eliminar"
 $buttonDelete.Size = New-Object System.Drawing.Size(100, 30)
 $buttonDelete.Location = New-Object System.Drawing.Point(120, 270)
 $TabFiles.Controls.Add($buttonDelete)
-$buttonDelete.Add_Click({ Delete-RemoteFile -selectedFile $listBox.SelectedItem -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -listBox $listBox -clientCertificate $global:clientCertificate })
+$buttonDelete.Add_Click({
+        if ($listViewFiles.SelectedItems.Count -gt 0) {
+            $selectedPath = $listViewFiles.SelectedItems[0].Tag
+            Delete-RemoteFile -selectedFile $selectedPath -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -listBox $null -clientCertificate $global:clientCertificate
+            $currentPath = $listViewFiles.Tag
+            if ($currentPath) {
+                Update-FileListView -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $currentPath -listView $listViewFiles -clientCertificate $global:clientCertificate
+            }
+        }
+    })
 
 $buttonMove = New-Object System.Windows.Forms.Button
 $buttonMove.Text = "Mover"
 $buttonMove.Size = New-Object System.Drawing.Size(100, 30)
 $buttonMove.Location = New-Object System.Drawing.Point(340, 270)
 $TabFiles.Controls.Add($buttonMove)
-$buttonMove.Add_Click({ Move-RemoteFile -selectedFile $listBox.SelectedItem -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -listBox $listBox -clientCertificate $global:clientCertificate })
+$buttonMove.Add_Click({
+        if ($listViewFiles.SelectedItems.Count -gt 0) {
+            $selectedPath = $listViewFiles.SelectedItems[0].Tag
+            Move-RemoteFile -selectedFile $selectedPath -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -listBox $null -clientCertificate $global:clientCertificate
+            $currentPath = $listViewFiles.Tag
+            if ($currentPath) {
+                Update-FileListView -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $currentPath -listView $listViewFiles -clientCertificate $global:clientCertificate
+            }
+        }
+    })
 
 $buttonCopiar = New-Object System.Windows.Forms.Button
 $buttonCopiar.Text = "Copiar"
 $buttonCopiar.Size = New-Object System.Drawing.Size(100, 30)
 $buttonCopiar.Location = New-Object System.Drawing.Point(230, 270)
 $TabFiles.Controls.Add($buttonCopiar)
-$buttonCopiar.Add_Click({ Copy-RemoteFile -selectedFile $listBox.SelectedItem -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -clientCertificate $global:clientCertificate })
+$buttonCopiar.Add_Click({
+        if ($listViewFiles.SelectedItems.Count -gt 0) {
+            $selectedPath = $listViewFiles.SelectedItems[0].Tag
+            Copy-RemoteFile -selectedFile $selectedPath -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -clientCertificate $global:clientCertificate
+        }
+    })
 
 $buttonSalir = New-Object System.Windows.Forms.Button
 $buttonSalir.Text = "Salir"
@@ -1358,7 +1414,7 @@ $buttonSalir.Add_Click({ Return-ToServerSelection })
 
 $buttonRDP = New-Object System.Windows.Forms.Button
 $buttonRDP.Text = "Escritorio Remoto"
-$buttonRDP.Size = New-Object System.Drawing.Size(100, 30)
+$buttonRDP.Size = New-Object System.Drawing.Size(200, 30)
 $buttonRDP.Location = New-Object System.Drawing.Point(670, 270)
 $TabFiles.Controls.Add($buttonRDP)
 $buttonRDP.Add_Click({ Start-Process "mstsc.exe" -ArgumentList "/v:$($global:selectedServer.IP) /f" })
@@ -1373,8 +1429,7 @@ $treeDirectories.add_AfterSelect({
             }
 
             if ($path) {
-                Update-FileList -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $path -listBox $listBox -clientCertificate $global:clientCertificate
-                $listBox.Tag = $path
+                Update-FileListView -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $path -listView $listViewFiles -clientCertificate $global:clientCertificate
             }
         }
     })
@@ -2314,30 +2369,27 @@ $form.Add_FormClosing({
         $_.Cancel = $true
     })
 
+$listViewFiles.Add_DoubleClick({
+        if ($listViewFiles.SelectedItems.Count -gt 0) {
+            $selectedItem = $listViewFiles.SelectedItems[0]
+            $targetPath = $selectedItem.Tag
 
-$listBox.Add_DoubleClick({
-        $selectedItem = $listBox.SelectedItem
-        if ($selectedItem) {
-            try {
-                if ($selectedItem -eq '..') {
-                    $currentPath = $listBox.Tag
-                    $parentPath = [System.IO.Path]::GetDirectoryName($currentPath)
-                    Update-FileList -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $parentPath -listBox $listBox -clientCertificate $global:clientCertificate
-                    $listBox.Tag = $parentPath
-                }
-                else {
-                    $isDir = Is-RemoteDirectory -itemPath $selectedItem -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -clientCertificate $global:clientCertificate
-                    if ($isDir) {
-                        Update-FileList -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $selectedItem -listBox $listBox -clientCertificate $global:clientCertificate
-                        $listBox.Tag = $selectedItem
+            if ($selectedItem.Text -eq '..') {
+                $targetPath = $selectedItem.Tag
+            }
+
+            if ($targetPath) {
+                try {
+                    $isDir = Is-RemoteDirectory -itemPath $targetPath -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -clientCertificate $global:clientCertificate
+                    if ($isDir -or $selectedItem.Text -eq '..') {
+                        Update-FileListView -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -path $targetPath -listView $listViewFiles -clientCertificate $global:clientCertificate
                     }
                 }
-            }
-            catch {
-                [System.Windows.Forms.MessageBox]::Show("Error al navegar: $($_.Exception.Message)", "Error de Acceso", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+                catch {
+                    [System.Windows.Forms.MessageBox]::Show("Error al explorar directorio: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+                }
             }
         }
     })
 
 $serverSelectionForm.ShowDialog()
-

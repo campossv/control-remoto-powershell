@@ -45,9 +45,10 @@ function Handle-ListFiles {
     )
     $directoryPath = $commandObj.params[0]
     try {
-        Write-Host "[v0] Attempting to list files in: $directoryPath"
+        Write-Host "[v1] Attempting to list files in: $directoryPath"
         if (Test-Path $directoryPath) {
-            $files = Get-ChildItem -Path $directoryPath -ErrorAction Stop | Select-Object -ExpandProperty FullName
+            $items = Get-ChildItem -Path $directoryPath -ErrorAction Stop
+            $files = $items | Select-Object Name, FullName, Length, LastWriteTime, PSIsContainer
             $response = @{ success = $true; files = @($files); currentPath = $directoryPath } | ConvertTo-Json -Compress
         }
         else {
