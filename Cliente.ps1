@@ -649,7 +649,8 @@ $form.Text = "Administrador de Equipos Remotos - $($global:selectedServer.IP)"
 $form.Size = New-Object System.Drawing.Size(1200, 900)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = 'FixedDialog'
-$form.ControlBox = $false
+$form.MaximizeBox = $false
+#$form.ControlBox = $false
 
 
 $menuStrip = New-Object System.Windows.Forms.MenuStrip
@@ -746,6 +747,7 @@ function Get-RemoteDirectoryEntries {
 
 
 $panelSysInfo = New-Object System.Windows.Forms.Panel
+$panelSysInfo.BackColor = [System.Drawing.Color]::White
 $panelSysInfo.Location = New-Object System.Drawing.Point(200, 10)
 $panelSysInfo.Size = New-Object System.Drawing.Size(770, 600)
 $panelSysInfo.AutoScroll = $true
@@ -995,6 +997,9 @@ $tabPageEventos.Controls.Add($numMaxEvents)
 
 
 $btnRefreshEvents = New-Object System.Windows.Forms.Button
+$btnRefreshEvents.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnRefreshEvents.ForeColor = [System.Drawing.Color]::White
+$btnRefreshEvents.FlatStyle = "Flat"
 $btnRefreshEvents.Text = "Actualizar"
 $btnRefreshEvents.Location = New-Object System.Drawing.Point(595, 10)
 $btnRefreshEvents.Size = New-Object System.Drawing.Size(90, 25)
@@ -1002,6 +1007,9 @@ $tabPageEventos.Controls.Add($btnRefreshEvents)
 
 
 $btnExportEvents = New-Object System.Windows.Forms.Button
+$btnExportEvents.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnExportEvents.ForeColor = [System.Drawing.Color]::White
+$btnExportEvents.FlatStyle = "Flat"
 $btnExportEvents.Text = "Exportar CSV"
 $btnExportEvents.Location = New-Object System.Drawing.Point(690, 10)
 $btnExportEvents.Size = New-Object System.Drawing.Size(90, 25)
@@ -1028,6 +1036,9 @@ $tabPageEventos.Controls.Add($lblEventStatus)
 
 
 $btnSalirEventos = New-Object System.Windows.Forms.Button
+$btnSalirEventos.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnSalirEventos.ForeColor = [System.Drawing.Color]::White
+$btnSalirEventos.FlatStyle = "Flat"
 $btnSalirEventos.Text = "Salir"
 $btnSalirEventos.Location = New-Object System.Drawing.Point(500, 750)
 $btnSalirEventos.Size = New-Object System.Drawing.Size(100, 30)
@@ -1130,6 +1141,9 @@ $txtBusquedaProcesos.Size = New-Object System.Drawing.Size(200, 20)
 $tabPageProcesos.Controls.Add($txtBusquedaProcesos)
 
 $btnBuscarProcesos = New-Object System.Windows.Forms.Button
+$btnBuscarProcesos.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnBuscarProcesos.ForeColor = [System.Drawing.Color]::White
+$btnBuscarProcesos.FlatStyle = "Flat"
 $btnBuscarProcesos.Location = New-Object System.Drawing.Point(220, 10)
 $btnBuscarProcesos.Size = New-Object System.Drawing.Size(80, 23)
 $btnBuscarProcesos.Text = "Buscar"
@@ -1137,6 +1151,9 @@ $tabPageProcesos.Controls.Add($btnBuscarProcesos)
 $btnBuscarProcesos.Add_Click({ Refresh-Processes -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -dataGrid $dataGridProcesos -filtro $txtBusquedaProcesos.Text -clientCertificate $global:clientCertificate })
 
 $btnMatarProcesos = New-Object System.Windows.Forms.Button
+$btnMatarProcesos.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnMatarProcesos.ForeColor = [System.Drawing.Color]::White
+$btnMatarProcesos.FlatStyle = "Flat"
 $btnMatarProcesos.Location = New-Object System.Drawing.Point(300, 750)
 $btnMatarProcesos.Size = New-Object System.Drawing.Size(150, 23)
 $btnMatarProcesos.Text = "Terminar proceso"
@@ -1160,6 +1177,9 @@ $btnMatarProcesos.Add_Click({
 
 
 $buttonSalirProcesos = New-Object System.Windows.Forms.Button
+$buttonSalirProcesos.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonSalirProcesos.ForeColor = [System.Drawing.Color]::White
+$buttonSalirProcesos.FlatStyle = "Flat"
 $buttonSalirProcesos.Text = "Salir"
 $buttonSalirProcesos.Size = New-Object System.Drawing.Size(150, 23)
 $buttonSalirProcesos.Location = New-Object System.Drawing.Point(680, 750)
@@ -1173,6 +1193,9 @@ $txtBusquedaServicios.Size = New-Object System.Drawing.Size(200, 20)
 $tabPageServicios.Controls.Add($txtBusquedaServicios)
 
 $btnBuscarServicios = New-Object System.Windows.Forms.Button
+$btnBuscarServicios.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnBuscarServicios.ForeColor = [System.Drawing.Color]::White
+$btnBuscarServicios.FlatStyle = "Flat"
 $btnBuscarServicios.Location = New-Object System.Drawing.Point(220, 10)
 $btnBuscarServicios.Size = New-Object System.Drawing.Size(80, 23)
 $btnBuscarServicios.Text = "Buscar"
@@ -1180,6 +1203,9 @@ $tabPageServicios.Controls.Add($btnBuscarServicios)
 $btnBuscarServicios.Add_Click({ Refresh-Services -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -dataGrid $dataGridServicios -filtro $txtBusquedaServicios.Text -clientCertificate $global:clientCertificate })
 
 $btnExcluirMicrosoft = New-Object System.Windows.Forms.Button
+$btnExcluirMicrosoft.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnExcluirMicrosoft.ForeColor = [System.Drawing.Color]::White
+$btnExcluirMicrosoft.FlatStyle = "Flat"
 $btnExcluirMicrosoft.Location = New-Object System.Drawing.Point(310, 10)
 $btnExcluirMicrosoft.Size = New-Object System.Drawing.Size(200, 23)
 $btnExcluirMicrosoft.Text = "Excluir servicios de Microsoft"
@@ -1195,6 +1221,9 @@ $dataGridServicios.SelectionMode = "FullRowSelect"
 $tabPageServicios.Controls.Add($dataGridServicios)
 
 $btnRefrescarServicios = New-Object System.Windows.Forms.Button
+$btnRefrescarServicios.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnRefrescarServicios.ForeColor = [System.Drawing.Color]::White
+$btnRefrescarServicios.FlatStyle = "Flat"
 $btnRefrescarServicios.Location = New-Object System.Drawing.Point(10, 750)
 $btnRefrescarServicios.Size = New-Object System.Drawing.Size(120, 23)
 $btnRefrescarServicios.Text = "Refrescar Servicios"
@@ -1202,6 +1231,9 @@ $tabPageServicios.Controls.Add($btnRefrescarServicios)
 $btnRefrescarServicios.Add_Click({ $global:excluirMicrosoft = $false; $btnExcluirMicrosoft.Text = "Excluir servicios de Microsoft"; Refresh-Services -remoteServer $global:selectedServer.IP -remotePort $Global:puerto -dataGrid $dataGridServicios -clientCertificate $global:clientCertificate })
 
 $btnIniciarServicio = New-Object System.Windows.Forms.Button
+$btnIniciarServicio.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnIniciarServicio.ForeColor = [System.Drawing.Color]::White
+$btnIniciarServicio.FlatStyle = "Flat"
 $btnIniciarServicio.Location = New-Object System.Drawing.Point(140, 750)
 $btnIniciarServicio.Size = New-Object System.Drawing.Size(80, 23)
 $btnIniciarServicio.Text = "Iniciar"
@@ -1214,6 +1246,9 @@ $btnIniciarServicio.Add_Click({
     })
 
 $btnDetenerServicio = New-Object System.Windows.Forms.Button
+$btnDetenerServicio.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnDetenerServicio.ForeColor = [System.Drawing.Color]::White
+$btnDetenerServicio.FlatStyle = "Flat"
 $btnDetenerServicio.Location = New-Object System.Drawing.Point(230, 750)
 $btnDetenerServicio.Size = New-Object System.Drawing.Size(80, 23)
 $btnDetenerServicio.Text = "Detener"
@@ -1226,6 +1261,9 @@ $btnDetenerServicio.Add_Click({
     })
 
 $btnReiniciarServicio = New-Object System.Windows.Forms.Button
+$btnReiniciarServicio.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnReiniciarServicio.ForeColor = [System.Drawing.Color]::White
+$btnReiniciarServicio.FlatStyle = "Flat"
 $btnReiniciarServicio.Location = New-Object System.Drawing.Point(320, 750)
 $btnReiniciarServicio.Size = New-Object System.Drawing.Size(80, 23)
 $btnReiniciarServicio.Text = "Reiniciar"
@@ -1250,6 +1288,9 @@ $btnExcluirMicrosoft.Add_Click({
 
 
 $buttonSalirServicios = New-Object System.Windows.Forms.Button
+$buttonSalirServicios.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonSalirServicios.ForeColor = [System.Drawing.Color]::White
+$buttonSalirServicios.FlatStyle = "Flat"
 $buttonSalirServicios.Text = "Salir"
 $buttonSalirServicios.Size = New-Object System.Drawing.Size(100, 30)
 $buttonSalirServicios.Location = New-Object System.Drawing.Point(680, 750)
@@ -1264,7 +1305,7 @@ $treeDirectories.HideSelection = $false
 $TabFiles.Controls.Add($treeDirectories)
 
 $listViewFiles = New-Object System.Windows.Forms.ListView
-$listViewFiles.Size = New-Object System.Drawing.Size(600, 240)
+$listViewFiles.Size = New-Object System.Drawing.Size(520, 240)
 $listViewFiles.Location = New-Object System.Drawing.Point(300, 20)
 $listViewFiles.View = [System.Windows.Forms.View]::Details
 $listViewFiles.FullRowSelect = $true
@@ -1274,6 +1315,61 @@ $listViewFiles.Columns.Add("Tamaño", 80) | Out-Null
 $listViewFiles.Columns.Add("Fecha", 120) | Out-Null
 $listViewFiles.Columns.Add("Tipo", 80) | Out-Null
 $TabFiles.Controls.Add($listViewFiles)
+
+$panelFileDetails = New-Object System.Windows.Forms.Panel
+$panelFileDetails.BackColor = [System.Drawing.Color]::FromArgb(250, 250, 250)
+$panelFileDetails.Size = New-Object System.Drawing.Size(240, 240)
+$panelFileDetails.Location = New-Object System.Drawing.Point(830, 20)
+$panelFileDetails.BorderStyle = "FixedSingle"
+$TabFiles.Controls.Add($panelFileDetails)
+
+$lblDetailTitle = New-Object System.Windows.Forms.Label
+$lblDetailTitle.Text = "Detalles"
+$lblDetailTitle.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+$lblDetailTitle.Location = New-Object System.Drawing.Point(8, 8)
+$lblDetailTitle.Size = New-Object System.Drawing.Size(220, 18)
+$panelFileDetails.Controls.Add($lblDetailTitle)
+
+$lblDetailName = New-Object System.Windows.Forms.Label
+$lblDetailName.Location = New-Object System.Drawing.Point(8, 32)
+$lblDetailName.Size = New-Object System.Drawing.Size(220, 32)
+$lblDetailName.AutoSize = $false
+$lblDetailName.Text = "Nombre:"
+$panelFileDetails.Controls.Add($lblDetailName)
+
+$lblDetailPath = New-Object System.Windows.Forms.Label
+$lblDetailPath.Location = New-Object System.Drawing.Point(8, 66)
+$lblDetailPath.Size = New-Object System.Drawing.Size(220, 48)
+$lblDetailPath.AutoSize = $false
+$lblDetailPath.Text = "Ruta:"
+$panelFileDetails.Controls.Add($lblDetailPath)
+
+$lblDetailSize = New-Object System.Windows.Forms.Label
+$lblDetailSize.Location = New-Object System.Drawing.Point(8, 118)
+$lblDetailSize.Size = New-Object System.Drawing.Size(220, 18)
+$lblDetailSize.Text = "Tamaño:"
+$panelFileDetails.Controls.Add($lblDetailSize)
+
+$lblDetailDate = New-Object System.Windows.Forms.Label
+$lblDetailDate.Location = New-Object System.Drawing.Point(8, 140)
+$lblDetailDate.Size = New-Object System.Drawing.Size(220, 18)
+$lblDetailDate.Text = "Fecha:"
+$panelFileDetails.Controls.Add($lblDetailDate)
+
+$lblDetailType = New-Object System.Windows.Forms.Label
+$lblDetailType.Location = New-Object System.Drawing.Point(8, 162)
+$lblDetailType.Size = New-Object System.Drawing.Size(220, 18)
+$lblDetailType.Text = "Tipo:"
+$panelFileDetails.Controls.Add($lblDetailType)
+
+$btnOpenNotepad = New-Object System.Windows.Forms.Button
+$btnOpenNotepad.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$btnOpenNotepad.ForeColor = [System.Drawing.Color]::White
+$btnOpenNotepad.FlatStyle = "Flat"
+$btnOpenNotepad.Text = "Abrir con Bloc de notas"
+$btnOpenNotepad.Size = New-Object System.Drawing.Size(220, 28)
+$btnOpenNotepad.Location = New-Object System.Drawing.Point(8, 192)
+$panelFileDetails.Controls.Add($btnOpenNotepad)
 
 $txtComando = New-Object System.Windows.Forms.TextBox
 $txtComando.Location = New-Object System.Drawing.Point(20, 320)
@@ -1293,6 +1389,9 @@ $txtSalida.ReadOnly = $true
 $TabFiles.Controls.Add($txtSalida)
 
 $buttonClearConsole = New-Object System.Windows.Forms.Button
+$buttonClearConsole.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonClearConsole.ForeColor = [System.Drawing.Color]::White
+$buttonClearConsole.FlatStyle = "Flat"
 $buttonClearConsole.Text = "Clear"
 $buttonClearConsole.Size = New-Object System.Drawing.Size(80, 24)
 $buttonClearConsole.Location = New-Object System.Drawing.Point(680, 318)
@@ -1342,6 +1441,9 @@ $buttonDownload = New-Object System.Windows.Forms.Button
 $buttonDownload.Text = "Descargar"
 $buttonDownload.Size = New-Object System.Drawing.Size(100, 30)
 $buttonDownload.Location = New-Object System.Drawing.Point(10, 270)
+$buttonDownload.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonDownload.ForeColor = [System.Drawing.Color]::White
+$buttonDownload.FlatStyle = "Flat"
 $TabFiles.Controls.Add($buttonDownload)
 $buttonDownload.Add_Click({
         if ($listViewFiles.SelectedItems.Count -gt 0) {
@@ -1354,6 +1456,9 @@ $buttonUpload = New-Object System.Windows.Forms.Button
 $buttonUpload.Text = "Subir"
 $buttonUpload.Size = New-Object System.Drawing.Size(100, 30)
 $buttonUpload.Location = New-Object System.Drawing.Point(450, 270)
+$buttonUpload.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonUpload.ForeColor = [System.Drawing.Color]::White
+$buttonUpload.FlatStyle = "Flat"
 $TabFiles.Controls.Add($buttonUpload)
 $buttonUpload.Add_Click({
         $currentPath = $listViewFiles.Tag
@@ -1365,6 +1470,9 @@ $buttonDelete = New-Object System.Windows.Forms.Button
 $buttonDelete.Text = "Eliminar"
 $buttonDelete.Size = New-Object System.Drawing.Size(100, 30)
 $buttonDelete.Location = New-Object System.Drawing.Point(120, 270)
+$buttonDelete.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonDelete.ForeColor = [System.Drawing.Color]::White
+$buttonDelete.FlatStyle = "Flat"
 $TabFiles.Controls.Add($buttonDelete)
 $buttonDelete.Add_Click({
         if ($listViewFiles.SelectedItems.Count -gt 0) {
@@ -1377,7 +1485,56 @@ $buttonDelete.Add_Click({
         }
     })
 
+
+$listViewFiles.Add_SelectedIndexChanged({
+        if ($listViewFiles.SelectedItems.Count -gt 0) {
+            $item = $listViewFiles.SelectedItems[0]
+
+            $name = $item.Text
+            $fullPath = [string]$item.Tag
+            $sizeText = if ($item.SubItems.Count -gt 1) { $item.SubItems[1].Text } else { "" }
+            $dateText = if ($item.SubItems.Count -gt 2) { $item.SubItems[2].Text } else { "" }
+            $typeText = if ($item.SubItems.Count -gt 3) { $item.SubItems[3].Text } else { "" }
+
+            $lblDetailName.Text = "Nombre: " + $name
+            $lblDetailPath.Text = "Ruta: " + $fullPath
+            $lblDetailSize.Text = "Tamaño: " + $sizeText
+            $lblDetailDate.Text = "Fecha: " + $dateText
+            $lblDetailType.Text = "Tipo: " + $typeText
+        }
+        else {
+            $lblDetailName.Text = "Nombre:"
+            $lblDetailPath.Text = "Ruta:"
+            $lblDetailSize.Text = "Tamaño:"
+            $lblDetailDate.Text = "Fecha:"
+            $lblDetailType.Text = "Tipo:"
+        }
+    })
+
+
+$btnOpenNotepad.Add_Click({
+        if ($listViewFiles.SelectedItems.Count -eq 0) { return }
+
+        $item = $listViewFiles.SelectedItems[0]
+        $fullPath = [string]$item.Tag
+        $typeText = if ($item.SubItems.Count -gt 3) { $item.SubItems[3].Text } else { "" }
+
+        if (-not $fullPath) { return }
+
+        if ($typeText -eq "Carpeta") {
+            [System.Windows.Forms.MessageBox]::Show("Seleccione un archivo (no una carpeta) para abrir en Bloc de notas.", "Información", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+            return
+        }
+
+        $escapedPath = $fullPath.Replace('"', '""')
+        $command = "notepad `"$escapedPath`""
+        Execute-RemoteCommand -command $command
+    })
+
 $buttonMove = New-Object System.Windows.Forms.Button
+$buttonMove.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonMove.ForeColor = [System.Drawing.Color]::White
+$buttonMove.FlatStyle = "Flat"
 $buttonMove.Text = "Mover"
 $buttonMove.Size = New-Object System.Drawing.Size(100, 30)
 $buttonMove.Location = New-Object System.Drawing.Point(340, 270)
@@ -1394,6 +1551,9 @@ $buttonMove.Add_Click({
     })
 
 $buttonCopiar = New-Object System.Windows.Forms.Button
+$buttonCopiar.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonCopiar.ForeColor = [System.Drawing.Color]::White
+$buttonCopiar.FlatStyle = "Flat"
 $buttonCopiar.Text = "Copiar"
 $buttonCopiar.Size = New-Object System.Drawing.Size(100, 30)
 $buttonCopiar.Location = New-Object System.Drawing.Point(230, 270)
@@ -1406,6 +1566,9 @@ $buttonCopiar.Add_Click({
     })
 
 $buttonSalir = New-Object System.Windows.Forms.Button
+$buttonSalir.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonSalir.ForeColor = [System.Drawing.Color]::White
+$buttonSalir.FlatStyle = "Flat"
 $buttonSalir.Text = "Salir"
 $buttonSalir.Size = New-Object System.Drawing.Size(100, 30)
 $buttonSalir.Location = New-Object System.Drawing.Point(560, 270)
@@ -1413,6 +1576,9 @@ $TabFiles.Controls.Add($buttonSalir)
 $buttonSalir.Add_Click({ Return-ToServerSelection })
 
 $buttonRDP = New-Object System.Windows.Forms.Button
+$buttonRDP.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
+$buttonRDP.ForeColor = [System.Drawing.Color]::White
+$buttonRDP.FlatStyle = "Flat"
 $buttonRDP.Text = "Escritorio Remoto"
 $buttonRDP.Size = New-Object System.Drawing.Size(200, 30)
 $buttonRDP.Location = New-Object System.Drawing.Point(670, 270)
@@ -1447,6 +1613,7 @@ $tabPageSoftware.Controls.Add($dataGridSoftware)
 
 
 $panelSoftwareInfo = New-Object System.Windows.Forms.Panel
+$panelSoftwareInfo.BackColor = [System.Drawing.Color]::White
 $panelSoftwareInfo.Location = New-Object System.Drawing.Point(770, 10)
 $panelSoftwareInfo.Size = New-Object System.Drawing.Size(400, 600)
 $panelSoftwareInfo.BorderStyle = "FixedSingle"
@@ -1612,7 +1779,7 @@ $panelMassServers.Controls.Add($btnRefreshMassServers)
 
 $panelMassConfig = New-Object System.Windows.Forms.Panel
 $panelMassConfig.Location = New-Object System.Drawing.Point(470, 10)
-$panelMassConfig.Size = New-Object System.Drawing.Size(500, 600)
+$panelMassConfig.Size = New-Object System.Drawing.Size(650, 600)
 $panelMassConfig.BorderStyle = "FixedSingle"
 $panelMassConfig.BackColor = [System.Drawing.Color]::FromArgb(250, 250, 250)
 $tabPageMassInstall.Controls.Add($panelMassConfig)
@@ -1620,7 +1787,7 @@ $tabPageMassInstall.Controls.Add($panelMassConfig)
 
 $lblConfigTitle = New-Object System.Windows.Forms.Label
 $lblConfigTitle.Text = "⚙️ Configuración de Instalación"
-$lblConfigTitle.Location = New-Object System.Drawing.Point(10, 10)
+$lblConfigTitle.Location = New-Object System.Drawing.Point(60, 10)
 $lblConfigTitle.Size = New-Object System.Drawing.Size(480, 25)
 $lblConfigTitle.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $lblConfigTitle.ForeColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
@@ -1629,19 +1796,19 @@ $panelMassConfig.Controls.Add($lblConfigTitle)
 
 $lblInstaller = New-Object System.Windows.Forms.Label
 $lblInstaller.Text = "📦 Archivo Instalador:"
-$lblInstaller.Location = New-Object System.Drawing.Point(10, 50)
+$lblInstaller.Location = New-Object System.Drawing.Point(60, 50)
 $lblInstaller.Size = New-Object System.Drawing.Size(480, 20)
 $panelMassConfig.Controls.Add($lblInstaller)
 
 $txtInstallerPath = New-Object System.Windows.Forms.TextBox
-$txtInstallerPath.Location = New-Object System.Drawing.Point(10, 75)
+$txtInstallerPath.Location = New-Object System.Drawing.Point(60, 75)
 $txtInstallerPath.Size = New-Object System.Drawing.Size(380, 25)
 $txtInstallerPath.ReadOnly = $true
 $panelMassConfig.Controls.Add($txtInstallerPath)
 
 $btnBrowseInstaller = New-Object System.Windows.Forms.Button
 $btnBrowseInstaller.Text = "📂 Buscar"
-$btnBrowseInstaller.Location = New-Object System.Drawing.Point(400, 73)
+$btnBrowseInstaller.Location = New-Object System.Drawing.Point(450, 73)
 $btnBrowseInstaller.Size = New-Object System.Drawing.Size(90, 27)
 $btnBrowseInstaller.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
 $btnBrowseInstaller.ForeColor = [System.Drawing.Color]::White
@@ -1651,12 +1818,12 @@ $panelMassConfig.Controls.Add($btnBrowseInstaller)
 
 $lblParams = New-Object System.Windows.Forms.Label
 $lblParams.Text = "⚙️ Parámetros de Instalación:"
-$lblParams.Location = New-Object System.Drawing.Point(10, 115)
+$lblParams.Location = New-Object System.Drawing.Point(60, 115)
 $lblParams.Size = New-Object System.Drawing.Size(480, 20)
 $panelMassConfig.Controls.Add($lblParams)
 
 $txtInstallParams = New-Object System.Windows.Forms.TextBox
-$txtInstallParams.Location = New-Object System.Drawing.Point(10, 140)
+$txtInstallParams.Location = New-Object System.Drawing.Point(60, 140)
 $txtInstallParams.Size = New-Object System.Drawing.Size(480, 25)
 $txtInstallParams.Text = "/silent /norestart"
 $panelMassConfig.Controls.Add($txtInstallParams)
@@ -1664,27 +1831,27 @@ $panelMassConfig.Controls.Add($txtInstallParams)
 
 $chkParallel = New-Object System.Windows.Forms.CheckBox
 $chkParallel.Text = "⚡ Instalación Paralela (más rápido)"
-$chkParallel.Location = New-Object System.Drawing.Point(10, 180)
+$chkParallel.Location = New-Object System.Drawing.Point(60, 180)
 $chkParallel.Size = New-Object System.Drawing.Size(480, 25)
 $chkParallel.Checked = $true
 $panelMassConfig.Controls.Add($chkParallel)
 
 $chkStopOnError = New-Object System.Windows.Forms.CheckBox
 $chkStopOnError.Text = "🛑 Detener si hay error"
-$chkStopOnError.Location = New-Object System.Drawing.Point(10, 210)
+$chkStopOnError.Location = New-Object System.Drawing.Point(60, 210)
 $chkStopOnError.Size = New-Object System.Drawing.Size(480, 25)
 $panelMassConfig.Controls.Add($chkStopOnError)
 
 
 $lblPreview = New-Object System.Windows.Forms.Label
 $lblPreview.Text = "👁️ Vista Previa:"
-$lblPreview.Location = New-Object System.Drawing.Point(10, 250)
+$lblPreview.Location = New-Object System.Drawing.Point(60, 250)
 $lblPreview.Size = New-Object System.Drawing.Size(480, 20)
 $lblPreview.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 $panelMassConfig.Controls.Add($lblPreview)
 
 $txtPreview = New-Object System.Windows.Forms.TextBox
-$txtPreview.Location = New-Object System.Drawing.Point(10, 275)
+$txtPreview.Location = New-Object System.Drawing.Point(60, 275)
 $txtPreview.Size = New-Object System.Drawing.Size(480, 120)
 $txtPreview.Multiline = $true
 $txtPreview.ReadOnly = $true
@@ -1696,18 +1863,18 @@ $panelMassConfig.Controls.Add($txtPreview)
 
 $lblProgress = New-Object System.Windows.Forms.Label
 $lblProgress.Text = "📊 Progreso:"
-$lblProgress.Location = New-Object System.Drawing.Point(10, 410)
+$lblProgress.Location = New-Object System.Drawing.Point(60, 410)
 $lblProgress.Size = New-Object System.Drawing.Size(480, 20)
 $lblProgress.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 $panelMassConfig.Controls.Add($lblProgress)
 
 $progressMass = New-Object System.Windows.Forms.ProgressBar
-$progressMass.Location = New-Object System.Drawing.Point(10, 435)
+$progressMass.Location = New-Object System.Drawing.Point(60, 435)
 $progressMass.Size = New-Object System.Drawing.Size(480, 25)
 $panelMassConfig.Controls.Add($progressMass)
 
 $txtProgressLog = New-Object System.Windows.Forms.TextBox
-$txtProgressLog.Location = New-Object System.Drawing.Point(10, 470)
+$txtProgressLog.Location = New-Object System.Drawing.Point(60, 470)
 $txtProgressLog.Size = New-Object System.Drawing.Size(480, 80)
 $txtProgressLog.Multiline = $true
 $txtProgressLog.ReadOnly = $true
@@ -1718,7 +1885,7 @@ $panelMassConfig.Controls.Add($txtProgressLog)
 
 $btnMassInstall = New-Object System.Windows.Forms.Button
 $btnMassInstall.Text = "🚀 INSTALAR EN SERVIDORES SELECCIONADOS"
-$btnMassInstall.Location = New-Object System.Drawing.Point(10, 560)
+$btnMassInstall.Location = New-Object System.Drawing.Point(60, 560)
 $btnMassInstall.Size = New-Object System.Drawing.Size(480, 35)
 $btnMassInstall.BackColor = [System.Drawing.Color]::FromArgb(40, 167, 69)
 $btnMassInstall.ForeColor = [System.Drawing.Color]::White
@@ -2365,8 +2532,10 @@ $tabPageMassInstall.Add_Enter({
     })
 
 $form.Add_FormClosing({
-        Return-ToServerSelection
-        $_.Cancel = $true
+        if ($global:sessionActive) {
+            Stop-RemoteSession -Reason "Ventana cerrada por el usuario"
+        }
+        # No tocar $_.Cancel => el cierre continúa
     })
 
 $listViewFiles.Add_DoubleClick({
