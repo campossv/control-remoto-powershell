@@ -395,6 +395,22 @@ ControlRemoto/
 
 ## 🧩 Módulos
 
+### Uso de módulos por script
+
+| Script / Componente          | Módulos utilizados                                                                 |
+|------------------------------|-------------------------------------------------------------------------------------|
+| Cliente.ps1 (GUI principal)  | RemoteConnection, FileOperations, ProcessManagement, ServiceManagement, SessionLogger, SystemInfo, EventViewer, DatabaseManager, SoftwareManagement |
+| Servidor.ps1                 | CommandHandlers, RemoteConnection, DatabaseManager                                 |
+| Ver-Inventario-GUI.ps1       | DatabaseManager                                                                    |
+| Collect-Inventory.ps1        | SystemInfo, DatabaseManager                                                        |
+| Test-ServerSetup.ps1         | RemoteConnection, DatabaseManager, SystemInfo                                      |
+
+**Módulos compartidos clave:**
+
+- DatabaseManager.psm1: utilizado por Cliente.ps1, Servidor.ps1, Ver-Inventario-GUI.ps1 y scripts de inventario.
+- RemoteConnection.psm1: base para la comunicación SSL/TLS entre cliente y servidor.
+- SystemInfo.psm1: utilizado tanto en el cliente (pestaña de información del sistema) como en los scripts de inventario.
+
 ### CertificateAuth.psm1
 Gestión de certificados SSL/TLS para autenticación.
 
