@@ -3,16 +3,16 @@
 
 Import-Module -Name ".\Modules\CertificateAuth.psm1" -Force
 
-Write-Host "[CONFIG] CONFIGURACION DE CERTIFICADOS DE CLIENTE" -ForegroundColor Cyan
+Write-Host "[CONFIG] CONFIGURACION DE CERTIFICADOS DE Administracion Remota" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 
 function Show-Menu {
     Write-Host "`nSeleccione una opcion:" -ForegroundColor Yellow
-    Write-Host "1) Generar nuevo certificado de cliente" -ForegroundColor White
-    Write-Host "2) Importar certificados de cliente autorizados" -ForegroundColor White
-    Write-Host "3) Ver certificados de cliente disponibles" -ForegroundColor White
-    Write-Host "4) Validar certificado de cliente" -ForegroundColor White
+    Write-Host "1) Generar nuevo certificado de Administracion Remota" -ForegroundColor White
+    Write-Host "2) Importar certificados de Administracion Remota autorizados" -ForegroundColor White
+    Write-Host "3) Ver certificados de Administracion Remota disponibles" -ForegroundColor White
+    Write-Host "4) Validar certificado de Administracion Remota" -ForegroundColor White
     Write-Host "5) Limpiar certificados expirados" -ForegroundColor White
     Write-Host "6) Salir" -ForegroundColor White
     Write-Host "`nOpcion: " -NoNewline -ForegroundColor Gray
@@ -20,15 +20,15 @@ function Show-Menu {
 
 
 function New-ClientCertificateMenu {
-    Write-Host "`n[FORM] GENERAR CERTIFICADO DE CLIENTE" -ForegroundColor Green
+    Write-Host "`n[FORM] GENERAR CERTIFICADO DE Administracion Remota" -ForegroundColor Green
     Write-Host "--------------------------------" -ForegroundColor Green
     
-    $clientName = Read-Host "Ingrese el nombre del cliente (ej: AdminPC01)"
+    $clientName = Read-Host "Ingrese el nombre del Administracion Remota (ej: AdminPC01)"
     $outputPath = Read-Host "Ingrese ruta de salida (Enter para .\Certificates)"
     $password = Read-Host "Ingrese contrasena (Enter para default)" -AsSecureString
     
     if ([string]::IsNullOrWhiteSpace($clientName)) {
-        Write-Warning "[ADVERTENCIA] El nombre del cliente no puede estar vacio"
+        Write-Warning "[ADVERTENCIA] El nombre del Administracion Remota no puede estar vacio"
         return
     }
     
@@ -50,7 +50,7 @@ function New-ClientCertificateMenu {
     if ($result) {
         Write-Host "`n[OK] CERTIFICADO GENERADO EXITOSAMENTE" -ForegroundColor Green
         Write-Host "[RESUMEN] Resumen:" -ForegroundColor Yellow
-        Write-Host "   - Cliente: $clientName" -ForegroundColor White
+        Write-Host "   - Administracion Remota: $clientName" -ForegroundColor White
         Write-Host "   - Thumbprint: $($result.Thumbprint)" -ForegroundColor White
         Write-Host "   - Valido hasta: $($result.Certificate.NotAfter)" -ForegroundColor White
         Write-Host "   - Archivos generados:" -ForegroundColor White
@@ -60,7 +60,7 @@ function New-ClientCertificateMenu {
         
         Write-Host "`n[INFO] INSTRUCCIONES:" -ForegroundColor Cyan
         Write-Host "1. Copie el archivo .cer al servidor y ejecutar 'Importar certificados'" -ForegroundColor White
-        Write-Host "2. Copie el archivo .pfx al cliente y use 'Cargar certificado'" -ForegroundColor White
+        Write-Host "2. Copie el archivo .pfx al Administracion Remota y use 'Cargar certificado'" -ForegroundColor White
         Write-Host "3. La contrasena del certificado es: $passwordText" -ForegroundColor Yellow
     }
 }
@@ -87,7 +87,7 @@ function Import-ClientCertificatesMenu {
     
     if ($success) {
         Write-Host "`n[OK] CERTIFICADOS IMPORTADOS EXITOSAMENTE" -ForegroundColor Green
-        Write-Host "[SEGURO] El servidor ahora aceptara conexiones de estos clientes" -ForegroundColor White
+        Write-Host "[SEGURO] El servidor ahora aceptara conexiones de estos Administracion Remotas" -ForegroundColor White
     }
     else {
         Write-Warning "`n[ERROR] No se pudieron importar certificados"
@@ -96,14 +96,14 @@ function Import-ClientCertificatesMenu {
 
 
 function Show-ClientCertificatesMenu {
-    Write-Host "`n[VER] CERTIFICADOS DE CLIENTE DISPONIBLES" -ForegroundColor Green
+    Write-Host "`n[VER] CERTIFICADOS DE Administracion Remota DISPONIBLES" -ForegroundColor Green
     Write-Host "---------------------------------------" -ForegroundColor Green
     
     Import-Module -Name ".\Modules\RemoteConnection.psm1" -Force
     $certs = Get-AvailableClientCertificates
     
     if ($certs.Count -eq 0) {
-        Write-Warning "[ADVERTENCIA] No se encontraron certificados de cliente disponibles"
+        Write-Warning "[ADVERTENCIA] No se encontraron certificados de Administracion Remota disponibles"
         Write-Host "[INFO] Genere un nuevo certificado usando la opcion 1" -ForegroundColor Cyan
         return
     }
@@ -123,7 +123,7 @@ function Show-ClientCertificatesMenu {
 
 
 function Test-ClientCertificateMenu {
-    Write-Host "`n[VALIDAR] VALIDAR CERTIFICADO DE CLIENTE" -ForegroundColor Green
+    Write-Host "`n[VALIDAR] VALIDAR CERTIFICADO DE Administracion Remota" -ForegroundColor Green
     Write-Host "-----------------------------------" -ForegroundColor Green
     
     $certPath = Read-Host "Ingrese ruta del archivo .pfx a validar"

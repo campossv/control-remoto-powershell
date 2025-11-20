@@ -4,16 +4,16 @@
 Import-Module -Name ".\Modules\CertificateAuth.psm1" -Force
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host "  REGENERACIÓN DE CERTIFICADOS" -ForegroundColor Cyan
+Write-Host "  GENERACIÓN DE CERTIFICADOS" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host ""
 
 
 $defaultName = $env:COMPUTERNAME
-Write-Host "Nombre del cliente (Enter para usar: $defaultName): " -NoNewline -ForegroundColor Yellow
-$clientName = Read-Host
-if ([string]::IsNullOrWhiteSpace($clientName)) {
-    $clientName = $defaultName
+Write-Host "Nombre del Equipo Administrador (Enter para usar: $defaultName): " -NoNewline -ForegroundColor Yellow
+$RAdmin = Read-Host
+if ([string]::IsNullOrWhiteSpace($RAdmin)) {
+    $RAdmin = $defaultName
 }
 
 Write-Host ""
@@ -36,14 +36,14 @@ else {
 Write-Host ""
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host "Generando certificado..." -ForegroundColor Yellow
-Write-Host "  Cliente: $clientName" -ForegroundColor White
+Write-Host "  Cliente: $RAdmin" -ForegroundColor White
 Write-Host "  Contraseña: $passwordText" -ForegroundColor White
 Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host ""
 
 
-$oldCer = ".\Certificates\$clientName.cer"
-$oldPfx = ".\Certificates\$clientName.pfx"
+$oldCer = ".\Certificates\$RAdmin.cer"
+$oldPfx = ".\Certificates\$RAdmin.pfx"
 
 if (Test-Path $oldCer) {
     Write-Host "Eliminando certificado antiguo: $oldCer" -ForegroundColor Yellow
@@ -58,7 +58,7 @@ if (Test-Path $oldPfx) {
 Write-Host ""
 
 
-$result = New-ClientCertificate -ClientName $clientName -OutputPath ".\Certificates" -Password $password
+$result = New-ClientCertificate -ClientName $RAdmin -OutputPath ".\Certificates" -Password $password
 
 if ($result) {
     Write-Host ""
@@ -67,7 +67,7 @@ if ($result) {
     Write-Host "=========================================" -ForegroundColor Green
     Write-Host ""
     Write-Host "INFORMACIÓN DEL CERTIFICADO:" -ForegroundColor Cyan
-    Write-Host "  • Cliente: $clientName" -ForegroundColor White
+    Write-Host "  • Equipo Administrador: $RAdmin" -ForegroundColor White
     Write-Host "  • Thumbprint: $($result.Thumbprint)" -ForegroundColor White
     Write-Host "  • Válido hasta: $($result.Certificate.NotAfter)" -ForegroundColor White
     Write-Host ""
@@ -79,10 +79,12 @@ if ($result) {
     Write-Host "  $passwordText" -ForegroundColor Green
     Write-Host ""
     Write-Host "PRÓXIMOS PASOS:" -ForegroundColor Cyan
-    Write-Host "  1. En el SERVIDOR: Ejecutar Setup-ClientCertificates.ps1" -ForegroundColor White
-    Write-Host "     y seleccionar 'Importar certificados de cliente autorizados'" -ForegroundColor White
-    Write-Host ""
-    Write-Host "  2. En el CLIENTE: Usar el archivo .pfx con la contraseña" -ForegroundColor White
+    Write-Host "  1. En el Agente Remoto: Solo copiar el certificado .cer" -ForegroundColor White
+    Write-Host "     y colocar en la carpeta .\Certificates\$RAdmin.cer" -ForegroundColor White
+    Write-Host "  NOTA" -ForegroundColor Yellow
+    Write-Host "     Copiar el .cer al agente remoto ().\Certificates\$RAdmin.cer" -ForegroundColor White
+    
+    Write-Host "  2. En el Equipo Administrador: Usar el archivo .pfx con la contraseña" -ForegroundColor White
     Write-Host "     mostrada arriba para cargar el certificado" -ForegroundColor White
     Write-Host ""
     Write-Host "=========================================" -ForegroundColor Green
