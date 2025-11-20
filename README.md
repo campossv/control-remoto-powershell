@@ -86,7 +86,7 @@ Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\' | Get-
 
 ```powershell
 # Clonar repositorio
-git clone https://github.com/tu-usuario/control-remoto-powershell.git
+git clone https://github.com/campossv/control-remoto-powershell.git
 cd control-remoto-powershell
 
 # O descargar ZIP y extraer
