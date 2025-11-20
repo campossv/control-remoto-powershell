@@ -6,7 +6,7 @@ Sistema completo de administración remota de servidores Windows con autenticaci
 
 - [Características](#-características)
 - [Requisitos](#-requisitos)
-- [Inicio Rápido](#-inicio-rápido) ⭐ **¡Empieza aquí!**
+- [Inicio Rápido](#-inicio-rápido) 
 - [Instalación](#-instalación)
 - [Configuración Inicial](#-configuración-inicial)
 - [Uso](#-uso)
@@ -162,6 +162,9 @@ New-NetFirewallRule `
     -Protocol TCP `
     -Action Allow `
     -Profile Domain,Private
+
+# Verificar regla creada
+Get-NetFirewallRule -DisplayName "Control Remoto Inventario (5000)"
 ```
 
 #### **Paso 7: Verificar Configuración (Recomendado)**
@@ -191,6 +194,9 @@ New-NetFirewallRule `
 # Deberías ver:
 # "Servidor SSL iniciado en el puerto 4430"
 # "Esperando conexiones..."
+
+#Iniciar la generación de inventario
+.\Servidor-InventoryAgent.ps1 <IP del cliente>
 ```
 
 **¿El servidor no inicia? Ejecutar `.\Test-ServerSetup.ps1` y ver sección de Troubleshooting más abajo.**
