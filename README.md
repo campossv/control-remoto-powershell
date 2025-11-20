@@ -143,16 +143,6 @@ Get-ChildItem Cert:\LocalMachine\My | Where-Object {$_.Subject -like "*ServidorR
 #### **Paso 6: Configurar Firewall**
 
 ```powershell
-# Permitir conexiones entrantes en el puerto 4430
-New-NetFirewallRule -DisplayName "Control Remoto PowerShell" `
-                    -Direction Inbound `
-                    -LocalPort 4430 `
-                    -Protocol TCP `
-                    -Action Allow `
-                    -Profile Domain,Private
-
-# Verificar regla creada
-Get-NetFirewallRule -DisplayName "Control Remoto PowerShell"
 
 # Mismo paso para recolectar inventario
 New-NetFirewallRule `
@@ -185,11 +175,22 @@ Get-NetFirewallRule -DisplayName "Control Remoto Inventario (5000)"
 
 **Si todas las verificaciones pasan, continuar al siguiente paso.**
 
-#### **Paso 8: Iniciar Servidor**
+#### **Paso 8: Iniciar agentes**
 
 ```powershell
-# Iniciar servidor (mantener ventana abierta)
-.\Servidor.ps1
+# Permitir conexiones entrantes en el puerto 4430
+New-NetFirewallRule -DisplayName "Control Remoto PowerShell" `
+                    -Direction Inbound `
+                    -LocalPort 4430 `
+                    -Protocol TCP `
+                    -Action Allow `
+                    -Profile Domain,Private
+
+# Verificar regla creada
+Get-NetFirewallRule -DisplayName "Control Remoto PowerShell"
+
+# Iniciar agente en los servidores (mantener ventana abierta)
+.\agente.ps1
 
 # Deberías ver:
 # "Servidor SSL iniciado en el puerto 4430"
@@ -280,13 +281,13 @@ Este script descarga e instala automáticamente las DLLs necesarias de System.Da
 
 1. **Configurar el puerto** (opcional, por defecto 4430):
    ```powershell
-   # Editar Servidor.ps1, línea 11
+   # Editar agente.ps1, línea 11
    $port = 4430
    ```
 
 2. **Iniciar el servidor**:
    ```powershell
-   .\Servidor.ps1
+   .\agente.ps1
    ```
 
 3. **Configurar firewall**:
@@ -376,7 +377,7 @@ EVENTOS_FILTRADOS|System|Error|100
 ```
 ControlRemoto/
 ├── Cliente.ps1                      # Cliente GUI principal
-├── Servidor.ps1                     # Servidor de escucha
+├── agente.ps1                     # Servidor de escucha
 ├── Modules/                         # Módulos PowerShell
 │   ├── CertificateAuth.psm1        # Autenticación con certificados
 │   ├── CommandHandlers.psm1        # Procesamiento de comandos
@@ -409,14 +410,14 @@ ControlRemoto/
 | Script / Componente          | Módulos utilizados                                                                 |
 |------------------------------|-------------------------------------------------------------------------------------|
 | Cliente.ps1 (GUI principal)  | RemoteConnection, FileOperations, ProcessManagement, ServiceManagement, SessionLogger, SystemInfo, EventViewer, DatabaseManager, SoftwareManagement |
-| Servidor.ps1                 | CommandHandlers, RemoteConnection, DatabaseManager                                 |
+| agente.ps1                 | CommandHandlers, RemoteConnection, DatabaseManager                                 |
 | Ver-Inventario-GUI.ps1       | DatabaseManager                                                                    |
 | Collect-Inventory.ps1        | SystemInfo, DatabaseManager                                                        |
 | Test-ServerSetup.ps1         | RemoteConnection, DatabaseManager, SystemInfo                                      |
 
 **Módulos compartidos clave:**
 
-- DatabaseManager.psm1: utilizado por Cliente.ps1, Servidor.ps1, Ver-Inventario-GUI.ps1 y scripts de inventario.
+- DatabaseManager.psm1: utilizado por Cliente.ps1, agente.ps1, Ver-Inventario-GUI.ps1 y scripts de inventario.
 - RemoteConnection.psm1: base para la comunicación SSL/TLS entre cliente y servidor.
 - SystemInfo.psm1: utilizado tanto en el cliente (pestaña de información del sistema) como en los scripts de inventario.
 
@@ -628,7 +629,7 @@ Logs ubicados en: `Logs/Session_YYYYMMDD_HHMMSS.log`
 #### ❌ Error: "El servidor no inicia" o "No se puede iniciar el listener"
 
 **Síntomas:**
-- El script `Servidor.ps1` se cierra inmediatamente
+- El script `agente.ps1` se cierra inmediatamente
 - Error: "No se puede enlazar al puerto 4430"
 - Error: "No se encuentra el certificado"
 
@@ -658,14 +659,14 @@ Get-Module -ListAvailable | Where-Object {$_.Name -like "*SSL*"}
 # Opción A: Detener proceso que usa el puerto
 Stop-Process -Id (Get-NetTCPConnection -LocalPort 4430).OwningProcess -Force
 
-# Opción B: Cambiar puerto en Servidor.ps1 (línea 11)
+# Opción B: Cambiar puerto en agente.ps1 (línea 11)
 # $port = 4431  # Usar otro puerto
 
 # Solución 2: Certificado faltante - regenerar
 .\Regenerar-Certificados.ps1
 
 # Solución 3: Permisos insuficientes - ejecutar como admin
-Start-Process powershell -Verb RunAs -ArgumentList "-File .\Servidor.ps1"
+Start-Process powershell -Verb RunAs -ArgumentList "-File .\agente.ps1"
 
 # Solución 4: Módulos no cargados - forzar carga
 Import-Module ".\Modules\SSLConfiguration.psm1" -Force
