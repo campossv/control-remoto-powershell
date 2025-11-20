@@ -225,8 +225,8 @@ Get-NetFirewallRule -DisplayName "Control Remoto PowerShell"
 # 1. Ingresar IP del servidor
 # 2. Ingresar contraseña del certificado
 # 3. Clic en "Conectar"
-![alt text](image.png)
 ```
+![alt text](image.png)
 
 #### **Paso 10: Verificar Funcionamiento**
 
