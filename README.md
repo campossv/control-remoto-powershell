@@ -90,7 +90,7 @@ git clone https://github.com/campossv/control-remoto-powershell.git
 cd control-remoto-powershell
 
 # O descargar ZIP y extraer
-# Descargar desde: https://github.com/tu-usuario/control-remoto-powershell/archive/refs/heads/main.zip
+# Descargar desde: https://github.com/campossv/control-remoto-powershell/archive/refs/heads/main.zip
 ```
 
 #### **Paso 3: Instalar Dependencias (IMPORTANTE)**
