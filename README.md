@@ -115,11 +115,8 @@ Get-ChildItem -Filter "System.Data.SQLite.dll" -Recurse
 #### **Paso 4: Inicializar Base de Datos**
 
 ```powershell
-# Crear estructura de base de datos
-# Opción 1: Recopilar inventario local (crea la BD automáticamente)
-.\Collect-Inventory.ps1 -SaveToDatabase
 
-# Opción 2: Usar el debugger para crear BD vacía
+# Usar el debugger para crear BD vacía
 .\Debug-InventoryDB.ps1
 
 # Verificar que la base de datos se creó correctamente
