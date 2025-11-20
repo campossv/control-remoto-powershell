@@ -133,7 +133,7 @@ Get-Item "Database\RemoteAdmin.db" | Select-Object Name, Length, LastWriteTime
 
 ```powershell
 # SERVIDOR: Generar certificado auto-firmado
-.\Regenerar-Certificados.ps1
+.\Generar-Certificados.ps1
 
 # Verificar certificado creado
 Get-ChildItem Cert:\LocalMachine\My | Where-Object {$_.Subject -like "*ServidorRemoto*"}
@@ -155,6 +155,10 @@ New-NetFirewallRule `
 
 # Verificar regla creada
 Get-NetFirewallRule -DisplayName "Control Remoto Inventario (5000)"
+
+#Lentar el servicio de inventario
+.\start-InventoryService.ps1
+
 ```
 
 #### **Paso 7: Verificar Configuración (Recomendado)**
@@ -267,7 +271,7 @@ Este script descarga e instala automáticamente las DLLs necesarias de System.Da
 
 #### Servidor
 ```powershell
-.\Regenerar-Certificados.ps1
+.\Generar-Certificados.ps1
 ```
 
 #### Cliente (opcional, para autenticación mutua)
@@ -392,10 +396,9 @@ ControlRemoto/
 │   └── SystemInfo.psm1             # Información del sistema
 ├── Setup-SQLite.ps1                # Instalador de SQLite
 ├── Setup-ClientCertificates.ps1    # Generador de certificados cliente
-├── Regenerar-Certificados.ps1      # Regenerador de certificados servidor
+├── Generar-Certificados.ps1      # Regenerador de certificados servidor
 ├── Collect-Inventory.ps1           # Recopilador de inventario
 ├── Schedule-InventoryTask.ps1      # Programador de tareas
-├── Setup-AutoInventory.ps1         # Configurador de inventario automático
 ├── Start-InventoryListener.ps1     # Listener de inventario
 ├── Servidor-InventoryAgent.ps1     # Agente de inventario
 ├── Ver-Inventario-GUI.ps1          # Visor de inventario GUI
@@ -520,11 +523,10 @@ Información detallada del sistema.
 
 ## 📊 Sistema de Inventario
 
-### Configuración Automática
 
 ```powershell
-# Configurar inventario automático (ejecutar como administrador)
-.\Setup-AutoInventory.ps1 -ServerIP "192.168.1.100" -ScheduleTime "02:00"
+# Configurar recepción de inventario (ejecutar como administrador)
+.\Start-InventoryListener.ps1
 ```
 
 Esto configura:
@@ -583,7 +585,7 @@ El sistema utiliza certificados X.509 para:
 
 #### Servidor (auto-firmado)
 ```powershell
-.\Regenerar-Certificados.ps1
+.\Generar-Certificados.ps1
 ```
 
 Genera certificado con:
@@ -663,7 +665,7 @@ Stop-Process -Id (Get-NetTCPConnection -LocalPort 4430).OwningProcess -Force
 # $port = 4431  # Usar otro puerto
 
 # Solución 2: Certificado faltante - regenerar
-.\Regenerar-Certificados.ps1
+.\Generar-Certificados.ps1
 
 # Solución 3: Permisos insuficientes - ejecutar como admin
 Start-Process powershell -Verb RunAs -ArgumentList "-File .\agente.ps1"
@@ -763,7 +765,7 @@ Import-Certificate -FilePath "servidor.cer" -CertStoreLocation Cert:\LocalMachin
 **Solución:**
 ```powershell
 # Regenerar certificados del servidor
-.\Regenerar-Certificados.ps1
+.\Generar-Certificados.ps1
 
 # Regenerar certificados del cliente
 .\Setup-ClientCertificates.ps1 -ComputerName "CLIENTE01"

@@ -1,18 +1,15 @@
-﻿
-
-
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
-    [string]$ClientIP,
+    [string]$RemoteServer,
     
-    [int]$ClientPort = 5000,
+    [int]$RemoteServerPort = 5000,
     
     [string]$ServerDescription = $env:COMPUTERNAME
 )
 
 Write-Host "=== Agente de Inventario ===" -ForegroundColor Cyan
 Write-Host "Servidor: $env:COMPUTERNAME" -ForegroundColor White
-Write-Host "Cliente: ${ClientIP}:${ClientPort}" -ForegroundColor White
+Write-Host "Cliente: ${RemoteServer}:${RemoteServerPort}" -ForegroundColor White
 
 
 $serverIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.*" } | Select-Object -First 1).IPAddress
@@ -173,7 +170,7 @@ Write-Host "`nEnviando inventario al cliente..." -ForegroundColor Yellow
 
 try {
     $json = $inventory | ConvertTo-Json -Depth 10
-    $url = "http://${ClientIP}:${ClientPort}/inventory/"
+    $url = "http://${RemoteServer}:${RemoteServerPort}/inventory/"
     
     $response = Invoke-RestMethod -Uri $url -Method Post -Body $json -ContentType "application/json" -TimeoutSec 30
     
