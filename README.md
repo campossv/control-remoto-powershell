@@ -138,9 +138,6 @@ Get-Item "Database\RemoteAdmin.db" | Select-Object Name, Length, LastWriteTime
 # Verificar certificado creado
 Get-ChildItem Cert:\LocalMachine\My | Where-Object {$_.Subject -like "*ServidorRemoto*"}
 
-# Exportar certificado para clientes (opcional)
-$cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object {$_.Subject -like "*ServidorRemoto*"}
-Export-Certificate -Cert $cert -FilePath "Certificates\ServidorRemoto.cer"
 ```
 
 #### **Paso 6: Configurar Firewall**
@@ -156,6 +153,15 @@ New-NetFirewallRule -DisplayName "Control Remoto PowerShell" `
 
 # Verificar regla creada
 Get-NetFirewallRule -DisplayName "Control Remoto PowerShell"
+
+# Mismo paso para recolectar inventario
+New-NetFirewallRule `
+    -DisplayName "Control Remoto Inventario (5000)" `
+    -Direction Inbound `
+    -LocalPort 5000 `
+    -Protocol TCP `
+    -Action Allow `
+    -Profile Domain,Private
 ```
 
 #### **Paso 7: Verificar Configuración (Recomendado)**

@@ -30,7 +30,8 @@ $psVersion = $PSVersionTable.PSVersion
 Write-Host "   Versión: $($psVersion.Major).$($psVersion.Minor).$($psVersion.Build)" -ForegroundColor Gray
 if ($psVersion.Major -ge 5 -and $psVersion.Minor -ge 1) {
     Write-Host "   ✅ PowerShell 5.1 o superior - OK" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   ❌ Se requiere PowerShell 5.1 o superior" -ForegroundColor Red
     $allChecksPass = $false
 }
@@ -40,7 +41,8 @@ Write-Host "`n2. Permisos de Administrador" -ForegroundColor Yellow
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if ($isAdmin) {
     Write-Host "   ✅ Ejecutando como Administrador - OK" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   ❌ NO se está ejecutando como Administrador" -ForegroundColor Red
     Write-Host "   Ejecutar: Start-Process powershell -Verb RunAs" -ForegroundColor Yellow
     $allChecksPass = $false
@@ -52,11 +54,13 @@ try {
     $netVersion = Get-ItemPropertyValue -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release -ErrorAction Stop
     if ($netVersion -ge 461808) {
         Write-Host "   ✅ .NET Framework 4.7.2 o superior - OK" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "   ⚠️ .NET Framework antiguo (versión: $netVersion)" -ForegroundColor Yellow
         Write-Host "   Recomendado: .NET Framework 4.8" -ForegroundColor Yellow
     }
-} catch {
+}
+catch {
     Write-Host "   ❌ No se pudo verificar .NET Framework" -ForegroundColor Red
     $allChecksPass = $false
 }
@@ -70,13 +74,25 @@ if ($portInUse) {
     Write-Host "   Proceso: $($process.ProcessName) (PID: $($process.Id))" -ForegroundColor Gray
     Write-Host "   Solución: Stop-Process -Id $($process.Id) -Force" -ForegroundColor Yellow
     $allChecksPass = $false
-} else {
+}
+else {
     Write-Host "   ✅ Puerto 4430 DISPONIBLE - OK" -ForegroundColor Green
 }
-
+Write-Host "`n4. Disponibilidad del Puerto 5000" -ForegroundColor Yellow
+$portInUse = Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue
+if ($portInUse) {
+    $process = Get-Process -Id $portInUse.OwningProcess -ErrorAction SilentlyContinue
+    Write-Host "   ❌ Puerto 5000 EN USO" -ForegroundColor Red
+    Write-Host "   Proceso: $($process.ProcessName) (PID: $($process.Id))" -ForegroundColor Gray
+    Write-Host "   Solución: Stop-Process -Id $($process.Id) -Force" -ForegroundColor Yellow
+    $allChecksPass = $false
+}
+else {
+    Write-Host "   ✅ Puerto 5000 DISPONIBLE - OK" -ForegroundColor Green
+}
 # 5. Verificar certificado SSL
 Write-Host "`n5. Certificado SSL" -ForegroundColor Yellow
-$cert = Get-ChildItem Cert:\LocalMachine\My -ErrorAction SilentlyContinue | Where-Object {$_.Subject -like "*ServidorRemoto*"}
+$cert = Get-ChildItem Cert:\LocalMachine\My -ErrorAction SilentlyContinue | Where-Object { $_.Subject -like "*ServidorRemoto*" }
 if ($cert) {
     Write-Host "   ✅ Certificado encontrado - OK" -ForegroundColor Green
     Write-Host "   Subject: $($cert.Subject)" -ForegroundColor Gray
@@ -89,7 +105,8 @@ if ($cert) {
         Write-Host "   Solución: .\Regenerar-Certificados.ps1" -ForegroundColor Yellow
         $allChecksPass = $false
     }
-} else {
+}
+else {
     Write-Host "   ❌ Certificado NO encontrado" -ForegroundColor Red
     Write-Host "   Solución: .\Regenerar-Certificados.ps1" -ForegroundColor Yellow
     $allChecksPass = $false
@@ -101,7 +118,8 @@ $sqliteDll = Get-ChildItem -Path $PSScriptRoot -Filter "System.Data.SQLite.dll" 
 if ($sqliteDll) {
     Write-Host "   ✅ System.Data.SQLite instalado - OK" -ForegroundColor Green
     Write-Host "   Ubicación: $($sqliteDll.DirectoryName)" -ForegroundColor Gray
-} else {
+}
+else {
     Write-Host "   ❌ System.Data.SQLite NO instalado" -ForegroundColor Red
     Write-Host "   Solución: .\Setup-SQLite.ps1" -ForegroundColor Yellow
     $allChecksPass = $false
@@ -121,7 +139,8 @@ foreach ($module in $requiredModules) {
     $modulePath = Join-Path -Path $PSScriptRoot -ChildPath "Modules\$module"
     if (Test-Path $modulePath) {
         Write-Host "   ✅ $module" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "   ❌ $module NO encontrado" -ForegroundColor Red
         $modulesOk = $false
         $allChecksPass = $false
@@ -136,7 +155,8 @@ if (Test-Path $dbPath) {
     Write-Host "   ✅ Base de datos existe - OK" -ForegroundColor Green
     Write-Host "   Tamaño: $([math]::Round($dbInfo.Length / 1KB, 2)) KB" -ForegroundColor Gray
     Write-Host "   Última modificación: $($dbInfo.LastWriteTime)" -ForegroundColor Gray
-} else {
+}
+else {
     Write-Host "   ⚠️ Base de datos NO existe" -ForegroundColor Yellow
     Write-Host "   Se creará automáticamente al recopilar inventario" -ForegroundColor Gray
     Write-Host "   Solución: .\Collect-Inventory.ps1 -SaveToDatabase" -ForegroundColor Yellow
@@ -148,7 +168,8 @@ $fwRule = Get-NetFirewallRule -DisplayName "Control Remoto*" -ErrorAction Silent
 if ($fwRule) {
     Write-Host "   ✅ Regla de firewall configurada - OK" -ForegroundColor Green
     Write-Host "   Estado: $($fwRule.Enabled)" -ForegroundColor Gray
-} else {
+}
+else {
     Write-Host "   ⚠️ Regla de firewall NO configurada" -ForegroundColor Yellow
     Write-Host "   Recomendado para conexiones remotas" -ForegroundColor Gray
     Write-Host "   Solución: New-NetFirewallRule -DisplayName 'Control Remoto PowerShell' -Direction Inbound -LocalPort 4430 -Protocol TCP -Action Allow" -ForegroundColor Yellow
@@ -162,7 +183,8 @@ foreach ($folder in $requiredFolders) {
     $folderPath = Join-Path -Path $PSScriptRoot -ChildPath $folder
     if (Test-Path $folderPath) {
         Write-Host "   ✅ $folder\" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "   ⚠️ $folder\ NO existe (se creará automáticamente)" -ForegroundColor Yellow
     }
 }
@@ -176,7 +198,8 @@ if ($allChecksPass) {
     Write-Host "✅ TODAS LAS VERIFICACIONES PASARON" -ForegroundColor Green
     Write-Host "`nEl servidor está listo para iniciarse." -ForegroundColor Green
     Write-Host "Ejecutar: .\Servidor.ps1`n" -ForegroundColor Cyan
-} else {
+}
+else {
     Write-Host "❌ ALGUNAS VERIFICACIONES FALLARON" -ForegroundColor Red
     Write-Host "`nPor favor, corregir los problemas indicados arriba antes de iniciar el servidor.`n" -ForegroundColor Yellow
     
