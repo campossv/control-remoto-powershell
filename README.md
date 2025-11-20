@@ -202,6 +202,10 @@ Get-NetFirewallRule -DisplayName "Control Remoto PowerShell"
 
 #Iniciar la generación de inventario
 .\Servidor-InventoryAgent.ps1 <IP del cliente>
+
+#Programar la generación de inventario
+.\Schedule-InventoryTask.ps1 -RemoteServer <IP del servidor> -Frequency Daily -Time "02:00"
+#NOTA: Si tienes dudas en los parameros puedes digitar !?
 ```
 
 **¿El servidor no inicia? Ejecutar `.\Test-ServerSetup.ps1` y ver sección de Troubleshooting más abajo.**
@@ -211,17 +215,15 @@ Get-NetFirewallRule -DisplayName "Control Remoto PowerShell"
 ```powershell
 # En otra máquina o ventana de PowerShell (como Administrador)
 
-# Importar certificado del servidor (si es auto-firmado)
-Import-Certificate -FilePath "\\servidor\share\ServidorRemoto.cer" `
-                   -CertStoreLocation Cert:\LocalMachine\Root
+# Verficar la existencia del certificado en el agente remoto y el RAdmin .\Certificates\<RAdmin>
+
 
 # Iniciar cliente GUI
-.\Cliente.ps1
+.\RAdmin.ps1
 
 # En la interfaz:
 # 1. Ingresar IP del servidor
 # 2. Clic en "Conectar"
-# 3. Probar comando: "INFO_SISTEMA"
 ```
 
 #### **Paso 10: Verificar Funcionamiento**
@@ -274,14 +276,15 @@ Este script descarga e instala automáticamente las DLLs necesarias de System.Da
 .\Generar-Certificados.ps1
 ```
 
-#### Cliente (opcional, para autenticación mutua)
+#### Agentes (copiar el .cer generado)
 ```powershell
-.\Setup-ClientCertificates.ps1 -ComputerName "NOMBRE-EQUIPO"
+Copy-Item -Path ".\Certificates\<RAdmin>.cer" -Destination "C:\Certificates\"
 ```
+
 
 ## ⚙️ Configuración Inicial
 
-### Servidor
+### Agente
 
 1. **Configurar el puerto** (opcional, por defecto 4430):
    ```powershell
@@ -289,7 +292,7 @@ Este script descarga e instala automáticamente las DLLs necesarias de System.Da
    $port = 4430
    ```
 
-2. **Iniciar el servidor**:
+2. **Iniciar el agente**:
    ```powershell
    .\agente.ps1
    ```
@@ -299,23 +302,19 @@ Este script descarga e instala automáticamente las DLLs necesarias de System.Da
    New-NetFirewallRule -DisplayName "Control Remoto" -Direction Inbound -LocalPort 4430 -Protocol TCP -Action Allow
    ```
 
-### Cliente
+### RAdmin
 
-1. **Configurar servidor destino**:
-   - Editar en la GUI o modificar `Cliente.ps1`
-
-2. **Importar certificado del servidor**:
-   - Copiar el certificado `.cer` del servidor
-   - Importar en "Entidades de certificación raíz de confianza"
+1. **Configurar servidor de administracion remota**:
+   - Editar en la GUI o modificar `RAdmin.ps1`
 
 3. **Ejecutar cliente**:
    ```powershell
-   .\Cliente.ps1
+   .\RAdmin.ps1
    ```
 
 ## 📖 Uso
 
-### Cliente GUI
+### RAdmin
 
 El cliente incluye una interfaz gráfica completa:
 
@@ -380,8 +379,8 @@ EVENTOS_FILTRADOS|System|Error|100
 
 ```
 ControlRemoto/
-├── Cliente.ps1                      # Cliente GUI principal
-├── agente.ps1                     # Servidor de escucha
+├── RAdmin.ps1                      # Cliente GUI principal
+├── agente.ps1                     # Servidor de escucha para RAdmin
 ├── Modules/                         # Módulos PowerShell
 │   ├── CertificateAuth.psm1        # Autenticación con certificados
 │   ├── CommandHandlers.psm1        # Procesamiento de comandos
@@ -395,7 +394,6 @@ ControlRemoto/
 │   ├── SoftwareManagement.psm1     # Gestión de software
 │   └── SystemInfo.psm1             # Información del sistema
 ├── Setup-SQLite.ps1                # Instalador de SQLite
-├── Setup-ClientCertificates.ps1    # Generador de certificados cliente
 ├── Generar-Certificados.ps1      # Regenerador de certificados servidor
 ├── Collect-Inventory.ps1           # Recopilador de inventario
 ├── Schedule-InventoryTask.ps1      # Programador de tareas
@@ -412,7 +410,7 @@ ControlRemoto/
 
 | Script / Componente          | Módulos utilizados                                                                 |
 |------------------------------|-------------------------------------------------------------------------------------|
-| Cliente.ps1 (GUI principal)  | RemoteConnection, FileOperations, ProcessManagement, ServiceManagement, SessionLogger, SystemInfo, EventViewer, DatabaseManager, SoftwareManagement |
+| RAdmin.ps1 (GUI principal)  | RemoteConnection, FileOperations, ProcessManagement, ServiceManagement, SessionLogger, SystemInfo, EventViewer, DatabaseManager, SoftwareManagement |
 | agente.ps1                 | CommandHandlers, RemoteConnection, DatabaseManager                                 |
 | Ver-Inventario-GUI.ps1       | DatabaseManager                                                                    |
 | Collect-Inventory.ps1        | SystemInfo, DatabaseManager                                                        |
@@ -420,7 +418,7 @@ ControlRemoto/
 
 **Módulos compartidos clave:**
 
-- DatabaseManager.psm1: utilizado por Cliente.ps1, agente.ps1, Ver-Inventario-GUI.ps1 y scripts de inventario.
+- DatabaseManager.psm1: utilizado por RAdmin.ps1, agente.ps1, Ver-Inventario-GUI.ps1 y scripts de inventario.
 - RemoteConnection.psm1: base para la comunicación SSL/TLS entre cliente y servidor.
 - SystemInfo.psm1: utilizado tanto en el cliente (pestaña de información del sistema) como en los scripts de inventario.
 
@@ -593,10 +591,6 @@ Genera certificado con:
 - **Validez**: 5 años
 - **Uso**: Server Authentication
 - **Almacén**: LocalMachine\My
-
-#### Cliente
-```powershell
-.\Setup-ClientCertificates.ps1 -ComputerName "CLIENTE01"
 ```
 
 Genera certificado con:
@@ -764,11 +758,10 @@ Import-Certificate -FilePath "servidor.cer" -CertStoreLocation Cert:\LocalMachin
 
 **Solución:**
 ```powershell
-# Regenerar certificados del servidor
+# Regenerar certificados del servidor RAdmin
 .\Generar-Certificados.ps1
 
-# Regenerar certificados del cliente
-.\Setup-ClientCertificates.ps1 -ComputerName "CLIENTE01"
+# Copiar .cer certificados a los agentes
 ```
 
 #### Error: "Acceso denegado"
