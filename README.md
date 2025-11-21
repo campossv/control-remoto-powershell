@@ -275,12 +275,14 @@ Este script descarga e instala automáticamente las DLLs necesarias de System.Da
 
 #### Servidor
 ```powershell
+#Genera el certificado publico (.cer) y el certificado privado (.pfx)
 .\Generar-Certificados.ps1
 ```
 
 #### Agentes (copiar el .cer generado)
 ```powershell
 Copy-Item -Path ".\Certificates\<RAdmin>.cer" -Destination "C:\Certificates\"
+#Destino es el directorio que se debe copiar a los agentes
 ```
 
 
@@ -293,13 +295,17 @@ Copy-Item -Path ".\Certificates\<RAdmin>.cer" -Destination "C:\Certificates\"
    # Editar agente.ps1, línea 11
    $port = 4430
    ```
-
-2. **Iniciar el agente**:
+2. **Configurar el certificado**:
+   ```powershell
+   # Editar agente.ps1, línea 12
+   $certPath = "C:\Certificates\<RAdmin>.cer" #Certificado traido de la carpeta Certificates generada.
+   ```
+3. **Iniciar el agente**:
    ```powershell
    .\agente.ps1
    ```
 
-3. **Configurar firewall**:
+4. **Configurar firewall**:
    ```powershell
    New-NetFirewallRule -DisplayName "Control Remoto" -Direction Inbound -LocalPort 4430 -Protocol TCP -Action Allow
    ```
