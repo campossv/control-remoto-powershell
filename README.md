@@ -319,7 +319,7 @@ Copy-Item -Path ".\Certificates\<RAdmin>.cer" -Destination "C:\Certificates\"
    ```powershell
    .\RAdmin.ps1
    ```
-   
+
  4. **Ejecutar el recolector de inventario**:
    ```powershell
    .\start-InventoryService.ps1
