@@ -6,6 +6,8 @@ Add-Type -AssemblyName System.Drawing
 
 Import-Module -Name ".\Modules\SessionLogger.psm1" -Force
 
+$logsDirectory = Join-Path $PSScriptRoot 'Logs'
+
 # === FORMULARIO PRINCIPAL ===
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "📊 Visor de Logs de Sesiones Remotas"
@@ -69,26 +71,37 @@ $txtBuscar.Location = New-Object System.Drawing.Point(505, 32)
 $txtBuscar.Size = New-Object System.Drawing.Size(200, 20)
 $panelFiltros.Controls.Add($txtBuscar)
 
-# Botón Buscar
+$lblTipoLog = New-Object System.Windows.Forms.Label
+$lblTipoLog.Text = "Tipo log:"
+$lblTipoLog.Location = New-Object System.Drawing.Point(720, 35)
+$lblTipoLog.Size = New-Object System.Drawing.Size(60, 20)
+$panelFiltros.Controls.Add($lblTipoLog)
+
+$comboLogType = New-Object System.Windows.Forms.ComboBox
+$comboLogType.Location = New-Object System.Drawing.Point(785, 32)
+$comboLogType.Size = New-Object System.Drawing.Size(120, 20)
+$comboLogType.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
+$comboLogType.Items.AddRange(@("Sesiones", "Inventario", "Errores"))
+$comboLogType.SelectedIndex = 0
+$panelFiltros.Controls.Add($comboLogType)
+
 $btnBuscar = New-Object System.Windows.Forms.Button
 $btnBuscar.Text = "🔍 Buscar"
-$btnBuscar.Location = New-Object System.Drawing.Point(720, 30)
+$btnBuscar.Location = New-Object System.Drawing.Point(915, 30)
 $btnBuscar.Size = New-Object System.Drawing.Size(100, 25)
 $btnBuscar.BackColor = [System.Drawing.Color]::LightBlue
 $panelFiltros.Controls.Add($btnBuscar)
 
-# Botón Actualizar
 $btnActualizar = New-Object System.Windows.Forms.Button
 $btnActualizar.Text = "🔄 Actualizar"
-$btnActualizar.Location = New-Object System.Drawing.Point(830, 30)
+$btnActualizar.Location = New-Object System.Drawing.Point(1025, 30)
 $btnActualizar.Size = New-Object System.Drawing.Size(100, 25)
 $btnActualizar.BackColor = [System.Drawing.Color]::LightGreen
 $panelFiltros.Controls.Add($btnActualizar)
 
-# Botón Reporte HTML
 $btnReporte = New-Object System.Windows.Forms.Button
 $btnReporte.Text = "📄 Reporte HTML"
-$btnReporte.Location = New-Object System.Drawing.Point(940, 30)
+$btnReporte.Location = New-Object System.Drawing.Point(940, 5)
 $btnReporte.Size = New-Object System.Drawing.Size(120, 25)
 $btnReporte.BackColor = [System.Drawing.Color]::LightCoral
 $panelFiltros.Controls.Add($btnReporte)
@@ -206,6 +219,122 @@ function Load-Sessions {
     }
 }
 
+function Load-InventoryLogs {
+    param (
+        [int]$Days = 7
+    )
+    
+    $statusLabel.Text = "Cargando logs de inventario..."
+    $listViewSesiones.Items.Clear()
+    
+    try {
+        if (-not (Test-Path $logsDirectory)) {
+            $lblStats.Text = "No se encontró el directorio de logs: $logsDirectory"
+            $statusLabel.Text = "Sin logs de inventario"
+            return
+        }
+        
+        $files = Get-ChildItem -Path $logsDirectory -Filter 'Inventory_*.log' -ErrorAction SilentlyContinue |
+        Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-$Days) } |
+        Sort-Object LastWriteTime -Descending
+        
+        foreach ($file in $files) {
+            $dateTime = $file.LastWriteTime
+            if ($file.Name -match 'Inventory_(\d{8}).log') {
+                try {
+                    $dateTime = [DateTime]::ParseExact($matches[1], 'yyyyMMdd', $null)
+                }
+                catch { }
+            }
+            $item = New-Object System.Windows.Forms.ListViewItem($dateTime.ToString('yyyy-MM-dd HH:mm:ss'))
+            $item.SubItems.Add('-') | Out-Null
+            $item.SubItems.Add($file.Name) | Out-Null
+            $item.SubItems.Add("$([math]::Round($file.Length / 1KB, 2)) KB") | Out-Null
+            $item.SubItems.Add('N/A') | Out-Null
+            $item.Tag = $file.FullName
+            $listViewSesiones.Items.Add($item) | Out-Null
+        }
+        
+        $totalLogs = $files.Count
+        $totalSize = ($files | Measure-Object -Property Length -Sum).Sum
+        $lblStats.Text = "📊 Total: $totalLogs logs de inventario | Tamaño total: $([math]::Round($totalSize / 1MB, 2)) MB"
+        $statusLabel.Text = "Listo - $totalLogs logs de inventario cargados"
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show("Error al cargar logs de inventario: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        $statusLabel.Text = "Error al cargar logs de inventario"
+    }
+}
+
+function Load-ErrorLogs {
+    param (
+        [string]$ServerIP = "*",
+        [int]$Days = 7
+    )
+    
+    $statusLabel.Text = "Cargando logs de errores..."
+    $listViewSesiones.Items.Clear()
+    
+    try {
+        if (-not (Test-Path $logsDirectory)) {
+            $lblStats.Text = "No se encontró el directorio de logs: $logsDirectory"
+            $statusLabel.Text = "Sin logs de errores"
+            return
+        }
+        
+        $pattern = if ($ServerIP -and $ServerIP -ne '*') { "Error_${ServerIP}_*.log" } else { 'Error_*.log' }
+        $files = Get-ChildItem -Path $logsDirectory -Filter $pattern -ErrorAction SilentlyContinue |
+        Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-$Days) } |
+        Sort-Object LastWriteTime -Descending
+        
+        foreach ($file in $files) {
+            $server = '-'
+            $dateTime = $file.LastWriteTime
+            if ($file.Name -match 'Error_(.+)_(\d{8}).log') {
+                $server = $matches[1]
+                try {
+                    $dateTime = [DateTime]::ParseExact($matches[2], 'yyyyMMdd', $null)
+                }
+                catch { }
+            }
+            $item = New-Object System.Windows.Forms.ListViewItem($dateTime.ToString('yyyy-MM-dd HH:mm:ss'))
+            $item.SubItems.Add($server) | Out-Null
+            $item.SubItems.Add($file.Name) | Out-Null
+            $item.SubItems.Add("$([math]::Round($file.Length / 1KB, 2)) KB") | Out-Null
+            $item.SubItems.Add('N/A') | Out-Null
+            $item.Tag = $file.FullName
+            $listViewSesiones.Items.Add($item) | Out-Null
+        }
+        
+        $totalLogs = $files.Count
+        $uniqueServers = ($files | ForEach-Object {
+                if ($_.Name -match 'Error_(.+)_(\d{8}).log') { $matches[1] } else { $null }
+            } | Where-Object { $_ } | Select-Object -Unique).Count
+        $totalSize = ($files | Measure-Object -Property Length -Sum).Sum
+        $lblStats.Text = "📊 Total: $totalLogs logs de error | Servidores: $uniqueServers | Tamaño total: $([math]::Round($totalSize / 1MB, 2)) MB"
+        $statusLabel.Text = "Listo - $totalLogs logs de error cargados"
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show("Error al cargar logs de error: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        $statusLabel.Text = "Error al cargar logs de error"
+    }
+}
+
+function Load-Logs {
+    param (
+        [string]$LogType,
+        [string]$ServerIP = "*",
+        [int]$Days = 7
+    )
+    
+    switch ($LogType) {
+        'Sesiones' { Load-Sessions -ServerIP $ServerIP -Days $Days }
+        'Inventario' { Load-InventoryLogs -Days $Days }
+        'Errores' { Load-ErrorLogs -ServerIP $ServerIP -Days $Days }
+        default { Load-Sessions -ServerIP $ServerIP -Days $Days }
+    }
+}
+
 function Show-LogContent {
     param ([string]$LogFile)
     
@@ -270,6 +399,11 @@ function Search-InLogs {
         return
     }
     
+    if ($comboLogType.SelectedItem -ne 'Sesiones') {
+        [System.Windows.Forms.MessageBox]::Show("La búsqueda solo está disponible en logs de sesión.", "Búsqueda", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        return
+    }
+    
     $statusLabel.Text = "Buscando '$SearchTerm'..."
     $txtDetalles.Clear()
     
@@ -318,7 +452,7 @@ $listViewSesiones.Add_SelectedIndexChanged({
     })
 
 $btnActualizar.Add_Click({
-        Load-Sessions -ServerIP $txtServidor.Text -Days $numDias.Value
+        Load-Logs -LogType $comboLogType.SelectedItem -ServerIP $txtServidor.Text -Days $numDias.Value
     })
 
 $btnBuscar.Add_Click({
@@ -363,8 +497,7 @@ $txtBuscar.Add_KeyDown({
         }
     })
 
-# === INICIALIZACIÓN ===
-Load-Sessions -ServerIP "*" -Days 7
+Load-Logs -LogType $comboLogType.SelectedItem -ServerIP "*" -Days 7
 
 # Mostrar formulario
 $form.ShowDialog() | Out-Null
