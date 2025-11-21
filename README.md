@@ -369,6 +369,22 @@ El cliente incluye una interfaz gráfica completa:
 - ![alt text](image-7.png)
 
 
+### Ver-Inventario-GUI
+
+Visor de inventario,incluye una interfaz gráfica completa:
+
+1. **Inventario de equipos**:
+   - Seleccion de servidores
+   - pestaña de hardware
+   - pestaña de software
+   - pestaña de busqueda de software
+   - Cuenta con exportar, editar, eliminar, cambiar estados y agregar etiquetas.
+- ![alt text](image-8.png)
+- ![alt text
+- ](image-9.png)
+- ![alt text](image-10.png)
+
+
 ### Comandos Disponibles
 #### Gestión de Archivos
 ```powershell
