@@ -8,17 +8,36 @@ param(
 
 Import-Module "$PSScriptRoot\Modules\DatabaseManager.psm1" -Force
 
+$logDir = Join-Path $PSScriptRoot 'logs'
+if (-not (Test-Path $logDir)) {
+    New-Item -ItemType Directory -Path $logDir | Out-Null
+}
+
+$logFile = Join-Path $logDir ("Inventory_{0:yyyyMMdd}.log" -f (Get-Date))
+
+function Write-InventoryLog {
+    param(
+        [string]$Level,
+        [string]$Message
+    )
+
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $line = "[$timestamp] [$Level] $Message"
+    Add-Content -Path $logFile -Value $line
+}
+
 Write-Host "=== Iniciando Receptor de Inventario ===" -ForegroundColor Cyan
 Write-Host "Puerto: $Port" -ForegroundColor Gray
-
+Write-InventoryLog -Level 'INFO' -Message "Receptor de inventario iniciado en puerto $Port"
 
 Write-Host "Inicializando base de datos..." -ForegroundColor Gray
+Write-InventoryLog -Level 'INFO' -Message 'Inicializando base de datos'
 $dbInit = Initialize-Database
 if (-not $dbInit) {
     Write-Error "No se pudo inicializar la base de datos"
+    Write-InventoryLog -Level 'ERROR' -Message 'No se pudo inicializar la base de datos'
     exit 1
 }
-
 
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://+:$Port/inventory/")
@@ -36,6 +55,7 @@ try {
         $response = $context.Response
         
         Write-Host "`n[$(Get-Date -Format 'HH:mm:ss')] Solicitud recibida desde: $($request.RemoteEndPoint)" -ForegroundColor Cyan
+        Write-InventoryLog -Level 'INFO' -Message "Solicitud recibida desde $($request.RemoteEndPoint) con método $($request.HttpMethod)"
         
         try {
             
@@ -43,6 +63,7 @@ try {
                 $response.StatusCode = 405
                 $response.Close()
                 Write-Warning "Método no permitido: $($request.HttpMethod)"
+                Write-InventoryLog -Level 'WARN' -Message "Método no permitido: $($request.HttpMethod) desde $($request.RemoteEndPoint)"
                 continue
             }
             
@@ -53,6 +74,7 @@ try {
             
             
             $inventory = $body | ConvertFrom-Json
+            Write-InventoryLog -Level 'INFO' -Message "Inventario recibido de servidor $($inventory.ServerIP) hostname $($inventory.Hostname)"
             
             Write-Host "  Servidor: $($inventory.ServerIP)" -ForegroundColor White
             Write-Host "  Hostname: $($inventory.Hostname)" -ForegroundColor White
@@ -64,9 +86,11 @@ try {
             $serverAdded = Add-Server -IPAddress $inventory.ServerIP -Hostname $inventory.Hostname -Description $inventory.Description -OS $inventory.OS -CertificateThumbprint $inventory.CertificateThumbprint
             if ($serverAdded) {
                 Write-Host "  ✓ Servidor registrado" -ForegroundColor Green
+                Write-InventoryLog -Level 'INFO' -Message "Servidor $($inventory.ServerIP) registrado correctamente"
             }
             else {
                 Write-Warning "  Error al registrar servidor"
+                Write-InventoryLog -Level 'WARN' -Message "Error al registrar servidor $($inventory.ServerIP)"
             }
             
             
@@ -77,10 +101,12 @@ try {
                 $hwResult = Add-HardwareInventory -ServerIP $inventory.ServerIP -HardwareComponents $inventory.Hardware
                 if ($hwResult) {
                     Write-Host "  ✓ Hardware guardado" -ForegroundColor Green
+                    Write-InventoryLog -Level 'INFO' -Message "Hardware guardado para servidor $($inventory.ServerIP) (componentes: $($inventory.Hardware.Count))"
                     $saved = $true
                 }
                 else {
                     Write-Warning "  Error al guardar hardware"
+                    Write-InventoryLog -Level 'WARN' -Message "Error al guardar hardware para servidor $($inventory.ServerIP)"
                 }
             }
             
@@ -89,10 +115,12 @@ try {
                 $swResult = Add-SoftwareInventory -ServerIP $inventory.ServerIP -SoftwareList $inventory.Software
                 if ($swResult) {
                     Write-Host "  ✓ Software guardado" -ForegroundColor Green
+                    Write-InventoryLog -Level 'INFO' -Message "Software guardado para servidor $($inventory.ServerIP) (aplicaciones: $($inventory.Software.Count))"
                     $saved = $true
                 }
                 else {
                     Write-Warning "  Error al guardar software"
+                    Write-InventoryLog -Level 'WARN' -Message "Error al guardar software para servidor $($inventory.ServerIP)"
                 }
             }
             
@@ -106,6 +134,7 @@ try {
                 
                 $response.StatusCode = 200
                 Write-Host "  ✓ Inventario procesado correctamente" -ForegroundColor Green
+                Write-InventoryLog -Level 'INFO' -Message "Inventario procesado correctamente para servidor $($inventory.ServerIP)"
             }
             else {
                 $responseData = @{
@@ -115,6 +144,7 @@ try {
                 
                 $response.StatusCode = 200
                 Write-Warning "  Inventario sin datos válidos"
+                Write-InventoryLog -Level 'WARN' -Message "Inventario sin datos válidos para servidor $($inventory.ServerIP)"
             }
             
             $buffer = [System.Text.Encoding]::UTF8.GetBytes($responseData)
@@ -124,6 +154,7 @@ try {
         }
         catch {
             Write-Warning "Error al procesar solicitud: $_"
+            Write-InventoryLog -Level 'ERROR' -Message "Error al procesar solicitud desde $($request.RemoteEndPoint): $($_.Exception.Message)"
             
             $errorData = @{
                 status  = "error"
@@ -141,5 +172,6 @@ try {
 finally {
     $listener.Stop()
     Write-Host "`n✓ Receptor detenido" -ForegroundColor Yellow
+    Write-InventoryLog -Level 'INFO' -Message 'Receptor de inventario detenido'
 }
 

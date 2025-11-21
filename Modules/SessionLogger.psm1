@@ -1,11 +1,9 @@
-﻿
-
-
-
-$script:LogDirectory = "$PSScriptRoot\..\Logs"
+﻿$script:LogDirectory = "$PSScriptRoot\..\Logs"
 $script:CurrentSessionLog = $null
 $script:CurrentSessionId = $null
 $script:SessionStartTime = $null
+$script:ErrorLogFile = $null
+$script:CurrentServerIP = $null
 
 function Initialize-SessionLogger {
     
@@ -14,7 +12,6 @@ function Initialize-SessionLogger {
     )
     
     $script:LogDirectory = $LogDirectory
-    
     
     if (-not (Test-Path $script:LogDirectory)) {
         New-Item -ItemType Directory -Path $script:LogDirectory -Force | Out-Null
@@ -36,6 +33,7 @@ function Start-RemoteSession {
     
     
     $script:CurrentSessionId = [Guid]::NewGuid().ToString().Substring(0, 8)
+    $script:CurrentServerIP = $ServerIP
     
     
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -97,6 +95,10 @@ function Write-SessionLog {
     
     
     Add-Content -Path $script:CurrentSessionLog -Value $logEntry -Encoding UTF8
+
+    if ($Level -eq "ERROR") {
+        Write-ErrorFileLog -Level $Level -Message $Message -Details $Details
+    }
     
     
     $color = switch ($Level) {

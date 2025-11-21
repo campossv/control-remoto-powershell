@@ -592,20 +592,31 @@ Información detallada del sistema.
 ```
 
 Esto configura:
-- Tarea programada diaria
-- Recopilación automática de inventario
-- Envío al servidor central
+- Recibo de datos
 - Almacenamiento en base de datos
 
 ### Recopilación Manual
 
 ```powershell
 # Recopilar inventario y guardar localmente
-.\Collect-Inventory.ps1 -SaveToDatabase
+.\Collect-Inventory.ps1 127.0.0.1
 
 # Recopilar y enviar al servidor
-.\Collect-Inventory.ps1 -ServerIP "192.168.1.100" -Port 4430
+.\Collect-Inventory.ps1 -ServerIP "192.168.1.100" -Port 5000
 ```
+### Recopilación Automatica
+
+```powershell
+# Recopilar inventario y guardar localmente
+.\Schedule-InventoryTask.ps1 -RemoteServer "127.0.0.1" -Frequency "Daily" -Time "02:00"
+```
+Esto configura:
+- Recibo de datos
+- Almacenamiento en base de datos
+- Tarea programada diaria
+- Recopilación automática de inventario
+- Envío al servidor central a las 2:00 AM
+- protrama el script Servidor-InventoryAgent
 
 ### Visualización de Inventario
 
