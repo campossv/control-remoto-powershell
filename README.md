@@ -342,13 +342,34 @@ El cliente incluye una interfaz gráfica completa:
 2. **Ejecutar comandos**:
    - Usar los botones de la interfaz
    - O escribir comandos personalizados
-
-3. **Ver logs**:
+ - ![alt text](image-1.png)
+3. **Ver procesos**:
+   - Panel de procesos en tiempo real
+   - Buscar y terminar procesos
+- ![alt text](image-2.png)
+4. **Ver servicios**:
+   - Panel de servicios en tiempo real
+   - Buscar, iniciar, detener o reiniciar servicios
+- ![alt text](image-3.png)
+5. **Ver logs**:
    - Panel de logs en tiempo real
    - Exportar logs a archivo
+- ![alt text](image-4.png)
+6. **Ver logs**:
+   - Panel de logs en tiempo real
+   - Exportar logs a archivo
+- ![alt text](image-5.png)
+7. **Administrar software**:
+   - Panel de programas instalados en tiempo real
+   - Instalar y desinstalar programas
+- ![alt text](image-6.png)
+8. **Instalacion Masiva (Aún en desarrollo)**:
+   - Seleccion de servidores
+   - Instalar programas
+- ![alt text](image-7.png)
+
 
 ### Comandos Disponibles
-
 #### Gestión de Archivos
 ```powershell
 LISTAR_ARCHIVOS|C:\Ruta
