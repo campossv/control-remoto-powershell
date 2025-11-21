@@ -2003,6 +2003,8 @@ $btnUninstallSoftware.Add_Click({
                     $lblSoftwareStatus.Text = "✓ Software desinstalado correctamente"
                     $lblSoftwareStatus.ForeColor = [System.Drawing.Color]::Green
                     
+                    Write-SessionLog -Level "SUCCESS" -Message "Software desinstalado" -Details "Software: $softwareName, Servidor: $($global:selectedServer.IP)"
+                    
                     [System.Windows.Forms.MessageBox]::Show(
                         "Software desinstalado exitosamente.`n`nActualiza la lista para ver los cambios.",
                         "Desinstalación Exitosa",
@@ -2017,6 +2019,8 @@ $btnUninstallSoftware.Add_Click({
                     $lblSoftwareStatus.Text = "❌ Error: $errorMsg"
                     $lblSoftwareStatus.ForeColor = [System.Drawing.Color]::Red
                     
+                    Write-SessionLog -Level "ERROR" -Message "Error al desinstalar software" -Details "Software: $softwareName, Servidor: $($global:selectedServer.IP), Error: $errorMsg"
+                    
                     [System.Windows.Forms.MessageBox]::Show(
                         "Error al desinstalar: $errorMsg",
                         "Error",
@@ -2028,6 +2032,7 @@ $btnUninstallSoftware.Add_Click({
             catch {
                 $lblSoftwareStatus.Text = "❌ Error al desinstalar: $_"
                 $lblSoftwareStatus.ForeColor = [System.Drawing.Color]::Red
+                Write-SessionLog -Level "ERROR" -Message "Excepción al desinstalar software" -Details "Software: $softwareName, Servidor: $($global:selectedServer.IP), Error: $($_.Exception.Message)"
             }
         }
     })

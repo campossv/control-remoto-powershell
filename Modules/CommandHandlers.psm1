@@ -512,60 +512,168 @@ function Handle-UninstallSoftware {
     try {
         Write-Host "Desinstalando software: $softwareName"
         
-        
+        $app = $null
         $uninstallString = $null
+        $quietUninstallString = $null
+        
         $registryPaths = @(
             "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
             "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
         )
         
         foreach ($path in $registryPaths) {
-            $app = Get-ItemProperty $path -ErrorAction SilentlyContinue | 
-            Where-Object { $_.DisplayName -eq $softwareName } | 
+            $app = Get-ItemProperty $path -ErrorAction SilentlyContinue |
+            Where-Object { $_.DisplayName -eq $softwareName } |
             Select-Object -First 1
-            
-            if ($app) {
+            if ($app) { break }
+        }
+        
+        if ($app) {
+            if ($app.PSObject.Properties["QuietUninstallString"]) {
+                $quietUninstallString = $app.QuietUninstallString
+            }
+            if ($app.PSObject.Properties["UninstallString"]) {
                 $uninstallString = $app.UninstallString
-                break
             }
         }
         
-        if ($uninstallString) {
-            Write-Host "Ejecutando: $uninstallString"
-            
-            
-            if ($uninstallString -match 'msiexec') {
-                
-                $guid = $uninstallString -replace '.*\{([^}]+)\}.*', '{$1}'
-                $process = Start-Process -FilePath "msiexec.exe" `
-                    -ArgumentList "/x `"$guid`" /quiet /norestart" `
-                    -Wait -PassThru -NoNewWindow
-            }
-            else {
-                
-                $process = Start-Process -FilePath "cmd.exe" `
-                    -ArgumentList "/c `"$uninstallString`" /S /silent /quiet" `
-                    -Wait -PassThru -NoNewWindow
-            }
-            
-            if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {
-                $response = @{
-                    success = $true
-                    message = "Software desinstalado correctamente"
-                } | ConvertTo-Json -Compress
-            }
-            else {
-                $response = @{
-                    success = $false
-                    message = "Código de salida: $($process.ExitCode)"
-                } | ConvertTo-Json -Compress
-            }
-        }
-        else {
+        if (-not $uninstallString -and -not $quietUninstallString) {
             $response = @{
                 success = $false
                 message = "No se encontró información de desinstalación para: $softwareName"
             } | ConvertTo-Json -Compress
+        }
+        else {
+            $exitCode = $null
+            $methodUsed = $null
+            $attempts = @()
+            
+            function Invoke-UninstallCommand {
+                param(
+                    [string]$commandLine,
+                    [string]$description
+                )
+                if (-not $commandLine) { return $null }
+                Write-Host "Ejecutando ($description): $commandLine"
+
+                $stdoutFile = [System.IO.Path]::GetTempFileName()
+                $stderrFile = [System.IO.Path]::GetTempFileName()
+
+                try {
+                    $proc = Start-Process -FilePath "cmd.exe" `
+                        -ArgumentList "/c $commandLine" `
+                        -RedirectStandardOutput $stdoutFile `
+                        -RedirectStandardError $stderrFile `
+                        -Wait -PassThru -NoNewWindow
+
+                    $stdOut = ""
+                    $stdErr = ""
+                    if (Test-Path $stdoutFile) {
+                        $stdOut = Get-Content -Path $stdoutFile -ErrorAction SilentlyContinue -Raw
+                    }
+                    if (Test-Path $stderrFile) {
+                        $stdErr = Get-Content -Path $stderrFile -ErrorAction SilentlyContinue -Raw
+                    }
+
+                    return [PSCustomObject]@{
+                        Process = $proc
+                        StdOut  = $stdOut
+                        StdErr  = $stdErr
+                    }
+                }
+                finally {
+                    Remove-Item $stdoutFile, $stderrFile -ErrorAction SilentlyContinue
+                }
+            }
+            
+            
+            if ($quietUninstallString) {
+                $result = Invoke-UninstallCommand -commandLine $quietUninstallString -description "QuietUninstallString"
+                if ($result) {
+                    $attempts += @{ Method = 'QuietUninstallString'; ExitCode = $result.Process.ExitCode; StdErr = $result.StdErr }
+                    $exitCode = $result.Process.ExitCode
+                    $methodUsed = 'QuietUninstallString'
+                }
+            }
+            
+            if (-not $exitCode -and $uninstallString) {
+                if ($uninstallString -match 'msiexec') {
+                    $guid = $null
+                    if ($uninstallString -match '\{[0-9A-Fa-f-]+\}') {
+                        $guid = $Matches[0]
+                    }
+                    if ($guid) {
+                        $msiCmd = "msiexec.exe /x `"$guid`" /quiet /norestart"
+                        $result = Invoke-UninstallCommand -commandLine $msiCmd -description "msiexec GUID"
+                        if ($result) {
+                            $attempts += @{ Method = 'msiexec'; ExitCode = $result.Process.ExitCode; StdErr = $result.StdErr }
+                            $exitCode = $result.Process.ExitCode
+                            $methodUsed = 'msiexec'
+                        }
+                    }
+                }
+            }
+            
+            if (-not $exitCode -and $uninstallString) {
+                $silentCmd = "$uninstallString /S /silent /quiet"
+                $result = Invoke-UninstallCommand -commandLine $silentCmd -description "UninstallString+silent"
+                if ($result) {
+                    $attempts += @{ Method = 'UninstallString+silent'; ExitCode = $result.Process.ExitCode; StdErr = $result.StdErr }
+                    $exitCode = $result.Process.ExitCode
+                    $methodUsed = 'UninstallString+silent'
+                }
+            }
+            
+            if (-not $exitCode -and $uninstallString) {
+                $result = Invoke-UninstallCommand -commandLine $uninstallString -description "UninstallString raw"
+                if ($result) {
+                    $attempts += @{ Method = 'UninstallString'; ExitCode = $result.Process.ExitCode; StdErr = $result.StdErr }
+                    $exitCode = $result.Process.ExitCode
+                    $methodUsed = 'UninstallString'
+                }
+            }
+            
+            
+            $stillInstalled = $false
+            foreach ($path in $registryPaths) {
+                $check = Get-ItemProperty $path -ErrorAction SilentlyContinue |
+                Where-Object { $_.DisplayName -eq $softwareName } |
+                Select-Object -First 1
+                if ($check) { $stillInstalled = $true; break }
+            }
+            
+            if (-not $exitCode) {
+                $exitCode = -1
+            }
+            
+            if (-not $stillInstalled -or $exitCode -eq 0 -or $exitCode -eq 3010) {
+                $response = @{
+                    success  = $true
+                    message  = "Software desinstalado (ExitCode=$exitCode, Método=$methodUsed)"
+                    exitCode = $exitCode
+                    method   = $methodUsed
+                } | ConvertTo-Json -Compress
+            }
+            else {
+                $attemptInfo = ($attempts | ForEach-Object { "[$($_.Method): $($_.ExitCode)]" }) -join ', '
+                $lastStdErr = ($attempts | Where-Object { $_.StdErr } | Select-Object -Last 1).StdErr
+                if ($lastStdErr) {
+                    $lastStdErr = $lastStdErr.Trim()
+                    if ($lastStdErr.Length -gt 500) {
+                        $lastStdErr = $lastStdErr.Substring(0, 500)
+                    }
+                }
+                $detailMsg = "Error al desinstalar '$softwareName'. ExitCode=$exitCode, Intentos=$attemptInfo"
+                if ($lastStdErr) {
+                    $detailMsg += "; StdErr: $lastStdErr"
+                }
+                $response = @{
+                    success  = $false
+                    message  = $detailMsg
+                    exitCode = $exitCode
+                    method   = $methodUsed
+                } | ConvertTo-Json -Compress
+            }
         }
     }
     catch {
@@ -632,25 +740,115 @@ function Handle-InstallSoftware {
         $installer = "C:\Temp\$fileName"
         
         if (Test-Path $installer) {
+            
+            function Invoke-InstallerCommand {
+                param(
+                    [string]$filePath,
+                    [string]$arguments,
+                    [string]$description
+                )
+                Write-Host "Ejecutando instalador ($description): $filePath $arguments"
+                
+                $stdoutFile = [System.IO.Path]::GetTempFileName()
+                $stderrFile = [System.IO.Path]::GetTempFileName()
+                
+                try {
+                    $proc = Start-Process -FilePath $filePath `
+                        -ArgumentList $arguments `
+                        -RedirectStandardOutput $stdoutFile `
+                        -RedirectStandardError $stderrFile `
+                        -Wait -PassThru -NoNewWindow
+                    
+                    $stdOut = ""
+                    $stdErr = ""
+                    if (Test-Path $stdoutFile) {
+                        $stdOut = Get-Content -Path $stdoutFile -ErrorAction SilentlyContinue -Raw
+                    }
+                    if (Test-Path $stderrFile) {
+                        $stdErr = Get-Content -Path $stderrFile -ErrorAction SilentlyContinue -Raw
+                    }
+                    
+                    return [PSCustomObject]@{
+                        Process = $proc
+                        StdOut  = $stdOut
+                        StdErr  = $stdErr
+                        Method  = $description
+                    }
+                }
+                finally {
+                    Remove-Item $stdoutFile, $stderrFile -ErrorAction SilentlyContinue
+                }
+            }
+            
+            $attempts = @()
+            $result = $null
+            
             if ($installer -like "*.msi") {
-                $process = Start-Process -FilePath "msiexec.exe" `
-                    -ArgumentList "/i `"$installer`" /quiet /norestart" `
-                    -Wait -PassThru
+                
+                $methods = @(
+                    @{ Args = "/i `"$installer`" /quiet /norestart"; Desc = "msiexec /quiet" },
+                    @{ Args = "/i `"$installer`" /qn /norestart"; Desc = "msiexec /qn" }
+                )
+                
+                foreach ($m in $methods) {
+                    $res = Invoke-InstallerCommand -filePath "msiexec.exe" -arguments $m.Args -description $m.Desc
+                    $attempts += $res
+                    if ($res.Process.ExitCode -eq 0 -or $res.Process.ExitCode -eq 3010) {
+                        $result = $res
+                        break
+                    }
+                }
             }
             else {
-                $process = Start-Process -FilePath $installer `
-                    -ArgumentList "/S /silent /quiet" `
-                    -Wait -PassThru
+                
+                $methods = @(
+                    @{ Args = "/S /silent /quiet"; Desc = "exe /S /silent /quiet" },
+                    @{ Args = "/S"; Desc = "exe /S" },
+                    @{ Args = ""; Desc = "exe sin argumentos" }
+                )
+                
+                foreach ($m in $methods) {
+                    $res = Invoke-InstallerCommand -filePath $installer -arguments $m.Args -description $m.Desc
+                    $attempts += $res
+                    if ($res.Process.ExitCode -eq 0 -or $res.Process.ExitCode -eq 3010) {
+                        $result = $res
+                        break
+                    }
+                }
             }
             
             
             Remove-Item $installer -Force -ErrorAction SilentlyContinue
             
-            $response = @{
-                Success  = $true
-                Message  = "Instalación completada"
-                ExitCode = $process.ExitCode
-            } | ConvertTo-Json -Compress
+            if ($result) {
+                $response = @{
+                    Success  = $true
+                    Message  = "Instalación completada (ExitCode=$($result.Process.ExitCode), Método=$($result.Method))"
+                    ExitCode = $result.Process.ExitCode
+                    Method   = $result.Method
+                } | ConvertTo-Json -Compress
+            }
+            else {
+                $last = $attempts | Select-Object -Last 1
+                $exitCode = if ($last) { $last.Process.ExitCode } else { -1 }
+                $attemptInfo = ($attempts | ForEach-Object { "[$($_.Method): $($_.Process.ExitCode)]" }) -join ', '
+                $lastStdErr = ($attempts | Where-Object { $_.StdErr } | Select-Object -Last 1).StdErr
+                if ($lastStdErr) {
+                    $lastStdErr = $lastStdErr.Trim()
+                    if ($lastStdErr.Length -gt 500) {
+                        $lastStdErr = $lastStdErr.Substring(0, 500)
+                    }
+                }
+                $detailMsg = "Error al instalar '$fileName'. ExitCode=$exitCode, Intentos=$attemptInfo"
+                if ($lastStdErr) {
+                    $detailMsg += "; StdErr: $lastStdErr"
+                }
+                $response = @{
+                    Success  = $false
+                    Message  = $detailMsg
+                    ExitCode = $exitCode
+                } | ConvertTo-Json -Compress
+            }
         }
         else {
             $response = @{

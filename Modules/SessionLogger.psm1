@@ -5,6 +5,35 @@ $script:SessionStartTime = $null
 $script:ErrorLogFile = $null
 $script:CurrentServerIP = $null
 
+function Write-ErrorFileLog {
+    
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Level,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$Message,
+        
+        [string]$Details = ""
+    )
+    
+    if (-not $script:CurrentServerIP) {
+        return
+    }
+    
+    $date = Get-Date -Format "yyyyMMdd"
+    $errorLogFileName = "Error_${script:CurrentServerIP}_${date}.log"
+    $errorLogPath = Join-Path $script:LogDirectory $errorLogFileName
+    
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+    $entry = "[$timestamp] [$Level] $Message"
+    if ($Details) {
+        $entry += "`n    Detalles: $Details"
+    }
+    
+    Add-Content -Path $errorLogPath -Value $entry -Encoding UTF8
+}
+
 function Initialize-SessionLogger {
     
     param (
