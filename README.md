@@ -309,7 +309,10 @@ Copy-Item -Path ".\Certificates\<RAdmin>.cer" -Destination "C:\Certificates\"
    ```powershell
    New-NetFirewallRule -DisplayName "Control Remoto" -Direction Inbound -LocalPort 4430 -Protocol TCP -Action Allow
    ```
-
+5. **Programar recoleccion de inventario**:
+   ```powershell
+   .\Schedule-InventoryTask.ps1 -RemoteServer <IP del servidor> -Frequency Daily -Time "02:00"
+   ```
 ### RAdmin
 
 1. **Configurar servidor de administracion remota**:
