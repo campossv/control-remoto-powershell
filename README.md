@@ -384,6 +384,17 @@ Visor de inventario,incluye una interfaz gráfica completa:
 - ](image-9.png)
 - ![alt text](image-10.png)
 
+### Ver logs de actividades
+
+Visor de logs de actividades, incluye una interfaz gráfica completa:
+
+1. **Inventario de equipos**:
+   - Data grid con los logs de actividades
+   - panel de vista previa de los logs
+   - filtrado por IP, cantidad de dias o palabra clave.
+   - exportar logs a archivo HTML.
+- ![alt text](image-11.png)
+   - 
 
 ### Comandos Disponibles
 #### Gestión de Archivos
