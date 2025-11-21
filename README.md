@@ -157,7 +157,7 @@ New-NetFirewallRule `
 Get-NetFirewallRule -DisplayName "Control Remoto Inventario (5000)"
 
 #Lentar el servicio de inventario
-.\start-InventoryService.ps1
+.\start-InventoryListener.ps1
 
 ```
 
@@ -734,7 +734,7 @@ Stop-Process -Id (Get-NetTCPConnection -LocalPort 4430).OwningProcess -Force
 # $port = 4431  # Usar otro puerto
 
 # Solución 2: Certificado faltante - regenerar
-.\Generar-Certificados.ps1
+Copiar el .cer, del servidor de administración o generar uno nuevo con .\Generar-Certificados.ps1
 
 # Solución 3: Permisos insuficientes - ejecutar como admin
 Start-Process powershell -Verb RunAs -ArgumentList "-File .\agente.ps1"
